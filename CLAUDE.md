@@ -1,10 +1,11 @@
 # Grid
 
-iOS focus/app-blocker themed as attending an F1 race weekend. User picks a
-circuit (sets session duration) + grandstand seat, commits via a stamped
-"paddock pass", watches a five-light start, then their chosen apps are
-shielded (Screen Time API) for the session. Progress is shown as laps.
-Early quit is allowed but stamped DNF. SwiftUI, iOS 17+, dark theme only.
+iOS focus/app-blocker themed as working a race weekend from the paddock.
+User picks a circuit (sets session duration) + a fictional team (its livery
+themes their pass), commits via a stamped "paddock pass", watches a
+five-light start, then their chosen apps are shielded (Screen Time API) for
+the session. Progress is shown as laps. Early quit is allowed but stamped
+DNF. SwiftUI, iOS 17+, dark theme only.
 
 ## Targets
 
@@ -38,10 +39,18 @@ bundle id `Akki.Grid`.
   Apple. Flip the default in `AppConfig.simulationModeDefault` once granted.
 - DeviceActivity schedules require ≥15 min intervals; `BlockingService`
   clamps the backstop accordingly (the app itself lifts the shield on time).
-- Asset resolution goes through `AssetResolver`; real 9:16 backdrops and
-  flyby .mp4 clips drop in later under the names declared on each `Seat`
-  (`<circuitID>_<seatID>_backdrop`, `<circuitID>_<seatID>_flyby<n>`). Until
-  then views fall back to gradient backdrops and a streak-flyby placeholder.
+- Asset resolution goes through `AssetResolver`; real 9:16 paddock backdrops
+  drop in later as `<circuitID>_paddock_backdrop` (gradient fallback until
+  then). Flybys are 3D: `CarFlybyView.swift` renders a procedural SceneKit
+  open-wheel car tinted in the team's livery; bundled
+  `<circuitID>_paddock_flyby<n>.mp4` clips optionally override it. Track
+  outlines are real geometry from bacinger/f1-circuits (MIT), generated into
+  `TrackOutlines.swift`.
+- Teams live in `TeamLibrary` (`Team.swift`); the pass is user-themeable via
+  `PassTheme` / Pass Studio.
+- DEBUG launch args for screenshot automation: `-uitest-pass` (jump to an
+  issued pass), `-uitest-racing` (land mid-race), `-uitest-flyby` (slow,
+  frequent flybys).
 - Race Log is SwiftData (`RaceRecord`).
 - StoreKit 2 one-time unlock, product id in `AppConfig`
   (`com.akki.grid.unlock.full`); free tier = Monte Carlo + Midlands.

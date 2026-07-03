@@ -57,7 +57,7 @@ private struct RaceLogRow: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(record.circuitName)
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.gilroy(15, .bold))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
                 Text("\(circuit?.flag ?? "🏁") \(record.teamName.uppercased()) • \(String(format: "SESSION %03d", record.sessionNumber))")

@@ -26,7 +26,7 @@ struct FinishView: View {
                     .foregroundStyle(Theme.gold)
             } else {
                 Image(systemName: "flag.slash.fill")
-                    .font(.system(size: 54))
+                    .font(.gilroy(54, .bold))
                     .foregroundStyle(Theme.raceRed)
                     .padding(.top, 48)
                 Text("DID NOT FINISH")

@@ -24,7 +24,8 @@ final class LiveActivityController {
             currentLap: 1,
             totalLaps: pass.totalLaps,
             startDate: startDate,
-            endDate: endDate
+            endDate: endDate,
+            flagRaw: nil
         )
         activity = try? Activity.request(
             attributes: attributes,
@@ -35,13 +36,26 @@ final class LiveActivityController {
     func updateLap(_ lap: Int, pass: PassDetails, startDate: Date) async {
         guard let activity else { return }
         let endDate = startDate.addingTimeInterval(pass.durationSeconds)
-        let state = RaceActivityAttributes.ContentState(
-            currentLap: lap,
-            totalLaps: pass.totalLaps,
-            startDate: startDate,
-            endDate: endDate
-        )
+        var state = activity.content.state
+        state.currentLap = lap
+        state.totalLaps = pass.totalLaps
+        state.startDate = startDate
+        state.endDate = endDate
         await activity.update(.init(state: state, staleDate: endDate))
+    }
+
+    /// Waves (or clears) a flag on the Live Activity. Called as the app
+    /// backgrounds, so it must be quick.
+    ///
+    /// When setting a yellow flag, pass a staleDate of `now + redDelay` so the
+    /// widget can escalate to a red flag once the activity becomes stale (the
+    /// app is suspended and can't push a second update).
+    func setFlag(_ flagRaw: String?, staleDate: Date? = nil) async {
+        guard let activity else { return }
+        var state = activity.content.state
+        state.flagRaw = flagRaw
+        let resolvedStale = staleDate ?? state.endDate
+        await activity.update(.init(state: state, staleDate: resolvedStale))
     }
 
     func end() async {

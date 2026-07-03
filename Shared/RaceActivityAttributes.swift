@@ -8,6 +8,8 @@ struct RaceActivityAttributes: ActivityAttributes {
         var totalLaps: Int
         var startDate: Date
         var endDate: Date
+        /// "yellow" when the user has left the app mid-session; nil = green.
+        var flagRaw: String?
     }
 
     var circuitName: String

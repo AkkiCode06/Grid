@@ -8,6 +8,7 @@ struct GridApp: App {
 
     init() {
         AppConfig.registerDefaultPreferences()
+        FontLoader.registerAll()
         do {
             modelContainer = try ModelContainer(for: RaceRecord.self)
         } catch {

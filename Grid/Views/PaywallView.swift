@@ -16,7 +16,7 @@ struct PaywallView: View {
             VStack(spacing: 24) {
                 VStack(spacing: 8) {
                     Image(systemName: "trophy.fill")
-                        .font(.system(size: 44))
+                        .font(.gilroy(44, .bold))
                         .foregroundStyle(Theme.gold)
                     Text("FULL SEASON PASS")
                         .font(.telemetry(18, weight: .black))
@@ -33,7 +33,7 @@ struct PaywallView: View {
                         HStack {
                             Text(circuit.flag)
                             Text(circuit.name)
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.gilroy(14, .semiBold))
                                 .foregroundStyle(Theme.textPrimary)
                             Spacer()
                             Image(systemName: circuit.isFree ? "checkmark.circle.fill" : "lock.open.fill")

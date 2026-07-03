@@ -13,7 +13,11 @@ final class StoreService {
     private var updatesTask: Task<Void, Never>?
 
     private init() {
+        #if DEBUG
+        hasFullAccess = true
+        #else
         hasFullAccess = UserDefaults.standard.bool(forKey: "hasFullAccess")
+        #endif
     }
 
     func start() async {

@@ -145,7 +145,7 @@ struct SwatchRow: View {
                                     )
                                 )
                             Text(name)
-                                .font(.system(size: 9, weight: .medium))
+                                .font(.gilroy(9, .medium))
                                 .foregroundStyle(isSelected ? .primary : .secondary)
                         }
                     }

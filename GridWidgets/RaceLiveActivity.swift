@@ -40,8 +40,9 @@ struct RaceLiveActivity: Widget {
                         .tint(.red)
                 }
             } compactLeading: {
-                Image(systemName: "flag.checkered")
-                    .foregroundStyle(.red)
+                let flag = resolvedFlag(context)
+                Image(systemName: flag != nil ? "flag.fill" : "flag.checkered")
+                    .foregroundStyle(flag == .red ? .red : flag == .yellow ? .yellow : .red)
             } compactTrailing: {
                 Text(timerInterval: context.state.startDate...context.state.endDate,
                      countsDown: true)
@@ -49,21 +50,58 @@ struct RaceLiveActivity: Widget {
                     .frame(maxWidth: 44)
                     .multilineTextAlignment(.trailing)
             } minimal: {
-                Image(systemName: "flag.checkered")
-                    .foregroundStyle(.red)
+                let flag = resolvedFlag(context)
+                Image(systemName: flag != nil ? "flag.fill" : "flag.checkered")
+                    .foregroundStyle(flag == .red ? .red : flag == .yellow ? .yellow : .red)
             }
         }
     }
+
+    /// Determine the effective flag state, escalating yellow → red when stale.
+    private func resolvedFlag(_ context: ActivityViewContext<RaceActivityAttributes>) -> FlagState? {
+        if context.state.flagRaw == "red" { return .red }
+        if context.state.flagRaw == "yellow" {
+            return context.isStale ? .red : .yellow
+        }
+        return nil
+    }
+}
+
+private enum FlagState {
+    case yellow, red
 }
 
 private struct LockScreenRaceView: View {
     let context: ActivityViewContext<RaceActivityAttributes>
 
+    private var flag: FlagState? {
+        if context.state.flagRaw == "red" { return .red }
+        if context.state.flagRaw == "yellow" {
+            return context.isStale ? .red : .yellow
+        }
+        return nil
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
+            if let flag {
+                HStack(spacing: 6) {
+                    Image(systemName: "flag.fill")
+                    Text(flag == .red
+                         ? "RED FLAG — GET BACK TO GRID NOW"
+                         : "YELLOW FLAG — BACK TO THE PITS")
+                        .font(.caption2.weight(.black))
+                        .kerning(1)
+                }
+                .foregroundStyle(flag == .red ? .white : .black)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 4)
+                .background(flag == .red ? Color.red : Color.yellow)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+            }
             HStack {
                 Image(systemName: "flag.checkered")
-                    .foregroundStyle(.red)
+                    .foregroundStyle(flag == .red ? .red : flag == .yellow ? .yellow : .red)
                 Text(context.attributes.circuitName)
                     .font(.subheadline.weight(.semibold))
                     .lineLimit(1)
@@ -92,3 +130,4 @@ private struct LockScreenRaceView: View {
         .foregroundStyle(.white)
     }
 }
+

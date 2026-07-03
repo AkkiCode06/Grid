@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// Circuit selection: horizontally paged circuit cards plus a team picker.
-/// You're in the paddock — the team you sign for stamps its name on your
-/// pass and applies its livery to it.
+/// Full-screen immersive circuit selection matching the racing view.
+/// Swipe left/right for circuits (TabView with transparent pages).
+/// Photorealistic flyover cycling between circuit and city modes.
 struct HomeView: View {
     @Environment(SessionController.self) private var session
 
@@ -29,83 +29,206 @@ struct HomeView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        ZStack {
+            // Background Flyover
+            if CircuitGeo.coordinates(for: selectedCircuit.id) != nil {
+                CircuitFlyoverView(
+                    circuitID: selectedCircuit.id,
+                    isPaused: false,
+                    dualMode: true
+                )
+                .ignoresSafeArea()
+                .overlay(Color.black.opacity(0.45).ignoresSafeArea())
+            } else {
+                LinearGradient(
+                    colors: selectedCircuit.skyColors.map { Color(hex: $0).opacity(0.35) },
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .background(Theme.background)
+                .ignoresSafeArea()
+            }
+
+            // Hidden TabView for swiping logic
+            TabView(selection: $selectedCircuitID) {
+                ForEach(CircuitLibrary.all) { circuit in
+                    Color.clear
+                        .tag(circuit.id)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .ignoresSafeArea()
+
+            // Foreground UI
             VStack(spacing: 0) {
                 header
-
-                TabView(selection: $selectedCircuitID) {
-                    ForEach(CircuitLibrary.all) { circuit in
-                        CircuitCardView(
-                            circuit: circuit,
-                            selectedTeamID: $selectedTeamID,
-                            customMinutes: $customMinutes,
-                            isLocked: isLocked(circuit)
-                        )
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 8)
-                        .tag(circuit.id)
-                    }
+                Spacer()
+                
+                // Bottom overlay area
+                VStack(spacing: 24) {
+                    circuitInfoOverlay
+                    teamPicker
+                    issueButton
                 }
-                .tabViewStyle(.page(indexDisplayMode: .always))
-
-                issueButton
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 12)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 32)
+                .background(
+                    LinearGradient(
+                        colors: [.clear, .black.opacity(0.6), .black.opacity(0.9)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .allowsHitTesting(false)
+                    .padding(.horizontal, -24)
+                    .padding(.bottom, -64)
+                )
             }
-            .background(Theme.background)
-            .sheet(isPresented: $showingRaceLog) { RaceLogView() }
-            .sheet(isPresented: $showingSettings) { SettingsView() }
-            .sheet(isPresented: $showingPaywall) { PaywallView() }
-            .sheet(isPresented: $showingPassStudio) { PassStudioView() }
-            .onAppear { customMinutes = session.customDurationMinutes }
-            .onChange(of: customMinutes) { _, newValue in
-                session.customDurationMinutes = newValue
-            }
-            .onChange(of: selectedTeamID) { _, _ in
-                PassThemeStore.shared.applyTeam(selectedTeam)
-            }
+        }
+        .sheet(isPresented: $showingRaceLog) { RaceLogView() }
+        .sheet(isPresented: $showingSettings) { SettingsView() }
+        .sheet(isPresented: $showingPaywall) { PaywallView() }
+        .sheet(isPresented: $showingPassStudio) { PassStudioView() }
+        .onAppear { customMinutes = session.customDurationMinutes }
+        .onChange(of: customMinutes) { _, newValue in
+            session.customDurationMinutes = newValue
+        }
+        .onChange(of: selectedTeamID) { _, _ in
+            PassThemeStore.shared.applyTeam(selectedTeam)
         }
     }
 
     private var header: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("GRID")
-                    .font(.system(size: 28, weight: .black, design: .default))
-                    .italic()
-                    .foregroundStyle(Theme.textPrimary)
-                Text("PICK YOUR CIRCUIT")
-                    .font(.telemetry(11))
-                    .foregroundStyle(Theme.textSecondary)
-                    .kerning(2)
-            }
+        HStack(alignment: .top) {
+            Text("GRID")
+                .font(.gilroy(32, .black))
+                .italic()
+                .foregroundStyle(.white)
+                .shadow(color: .black.opacity(0.6), radius: 4, x: 0, y: 2)
+
             Spacer()
-            Button {
-                showingPassStudio = true
-            } label: {
-                Image(systemName: "paintbrush.fill")
-                    .font(.title3)
-                    .foregroundStyle(Theme.textPrimary)
+
+            HStack(spacing: 12) {
+                actionIcon(systemName: "paintbrush.fill") { showingPassStudio = true }
+                actionIcon(systemName: "flag.checkered") { showingRaceLog = true }
+                actionIcon(systemName: "gearshape.fill") { showingSettings = true }
             }
-            .padding(.trailing, 12)
-            Button {
-                showingRaceLog = true
-            } label: {
-                Image(systemName: "flag.checkered")
-                    .font(.title3)
-                    .foregroundStyle(Theme.textPrimary)
-            }
-            .padding(.trailing, 12)
-            Button {
-                showingSettings = true
-            } label: {
-                Image(systemName: "gearshape.fill")
-                    .font(.title3)
-                    .foregroundStyle(Theme.textPrimary)
-            }
+            .padding(.top, 4)
         }
         .padding(.horizontal, 24)
-        .padding(.top, 8)
+        .padding(.top, 16)
+        // Make header tapable above the transparent TabView
+        .zIndex(1) 
+    }
+
+    private func actionIcon(systemName: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.gilroy(16, .bold))
+                .foregroundStyle(.white)
+                .padding(12)
+                .background(.black.opacity(0.4), in: Circle())
+                .overlay(Circle().strokeBorder(.white.opacity(0.2), lineWidth: 1))
+        }
+    }
+
+    private var circuitInfoOverlay: some View {
+        VStack(spacing: 10) {
+            HStack {
+                Text(selectedCircuit.flag)
+                    .font(.title2)
+                Text(selectedCircuit.country.uppercased())
+                    .font(.gilroy(14, .bold))
+                    .kerning(2)
+                    .foregroundStyle(.white.opacity(0.8))
+                Spacer()
+                if isLocked(selectedCircuit) {
+                    Label("LOCKED", systemImage: "lock.fill")
+                        .font(.gilroy(11, .bold))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Theme.gold.opacity(0.2), in: Capsule())
+                        .foregroundStyle(Theme.gold)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(selectedCircuit.name)
+                    .font(.gilroy(34, .heavy))
+                    .foregroundStyle(.white)
+                    .shadow(color: .black.opacity(0.5), radius: 4, x: 0, y: 2)
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                let durationText = selectedCircuit.isCustom ? "\(customMinutes) MIN" : "\(selectedCircuit.durationMinutes ?? 0) MIN"
+                let lapsText = "\(selectedCircuit.totalLaps(customMinutes: customMinutes)) LAPS"
+
+                HStack(spacing: 12) {
+                    Text(durationText)
+                    Text("•").foregroundStyle(.white.opacity(0.4))
+                    Text(lapsText)
+                }
+                .font(.gilroy(15, .bold))
+                .foregroundStyle(Theme.raceRed)
+            }
+
+            if selectedCircuit.isCustom {
+                Stepper(value: $customMinutes, in: 5...240, step: 5) {
+                    Text("\(customMinutes) MINUTES")
+                        .font(.gilroy(14, .bold))
+                        .foregroundStyle(.white)
+                }
+                .padding(.top, 8)
+                .zIndex(1)
+            }
+        }
+        .zIndex(1)
+    }
+
+    private var teamPicker: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("SIGN FOR A TEAM")
+                .font(.gilroy(11, .bold))
+                .kerning(2)
+                .foregroundStyle(.white.opacity(0.6))
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(TeamLibrary.all) { team in
+                        let isSelected = team.id == selectedTeamID
+                        Button {
+                            Haptics.impact(.light)
+                            selectedTeamID = team.id
+                        } label: {
+                            HStack(spacing: 8) {
+                                Circle()
+                                    .fill(Color(hex: team.accentHex))
+                                    .frame(width: 14, height: 14)
+                                    .overlay(
+                                        Circle().strokeBorder(.white.opacity(0.3), lineWidth: 1)
+                                    )
+                                Text(team.name)
+                                    .font(.gilroy(13, .bold))
+                                    .lineLimit(1)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                            .background(
+                                isSelected ? Color(hex: team.accentHex).opacity(0.3) : .black.opacity(0.5),
+                                in: Capsule()
+                            )
+                            .overlay(
+                                Capsule().strokeBorder(
+                                    isSelected ? Color(hex: team.accentHex) : .white.opacity(0.15),
+                                    lineWidth: 1.5
+                                )
+                            )
+                            .foregroundStyle(isSelected ? .white : .white.opacity(0.7))
+                        }
+                    }
+                }
+            }
+        }
+        .zIndex(1)
     }
 
     private var issueButton: some View {
@@ -122,11 +245,13 @@ struct HomeView: View {
                 Text(isLocked(selectedCircuit) ? "UNLOCK ALL CIRCUITS" : "ISSUE PADDOCK PASS")
                     .kerning(1.5)
             }
-            .font(.telemetry(15, weight: .bold))
+            .font(.gilroy(15, .bold))
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(Theme.raceRed, in: RoundedRectangle(cornerRadius: 14))
+            .padding(.vertical, 18)
+            .background(Theme.raceRed, in: RoundedRectangle(cornerRadius: 16))
             .foregroundStyle(.white)
+            .shadow(color: Theme.raceRed.opacity(0.4), radius: 8, x: 0, y: 4)
         }
+        .zIndex(1)
     }
 }

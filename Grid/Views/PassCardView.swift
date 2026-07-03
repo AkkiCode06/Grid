@@ -127,7 +127,7 @@ struct PassCardView: View {
     private func header(_ w: CGFloat) -> some View {
         HStack(alignment: .top) {
             Text("GRID")
-                .font(.system(size: w * 0.08, weight: .black))
+                .font(.gilroy(w * 0.08, .black))
                 .italic()
                 .foregroundStyle(theme.accent)
                 .padding(.horizontal, w * 0.045)
@@ -150,7 +150,7 @@ struct PassCardView: View {
         return VStack(alignment: .trailing, spacing: -w * 0.012) {
             ForEach(rows, id: \.self) { row in
                 Text(row)
-                    .font(.system(size: w * 0.085, weight: .black))
+                    .font(.gilroy(w * 0.085, .black))
                     .fontWidth(.condensed)
             }
         }
@@ -160,7 +160,7 @@ struct PassCardView: View {
     private func roleBlock(_ w: CGFloat) -> some View {
         ZStack {
             Text(theme.roleText.uppercased())
-                .font(.system(size: w * 0.34, weight: .black))
+                .font(.gilroy(w * 0.34, .black))
                 .fontWidth(.condensed)
                 .kerning(-w * 0.008)
                 .lineLimit(1)
@@ -185,15 +185,15 @@ struct PassCardView: View {
         VStack(alignment: .leading, spacing: w * 0.012) {
             HStack(spacing: w * 0.02) {
                 Text(model.flag)
-                    .font(.system(size: w * 0.05))
+                    .font(.gilroy(w * 0.05, .regular))
                 Text(model.circuitName.uppercased())
-                    .font(.system(size: w * 0.042, weight: .heavy))
+                    .font(.gilroy(w * 0.042, .heavy))
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                 Spacer()
                 if theme.showSessionNumber {
                     Text(model.sessionLabel)
-                        .font(.system(size: w * 0.038, weight: .bold, design: .monospaced))
+                        .font(.gilroy(w * 0.038, .bold))
                 }
             }
             HStack(spacing: w * 0.015) {
@@ -206,7 +206,7 @@ struct PassCardView: View {
                 Text("\(Int(model.durationSeconds / 60)) MIN / \(model.totalLaps) LAPS")
                 Spacer()
             }
-            .font(.system(size: w * 0.033, weight: .semibold, design: .monospaced))
+            .font(.gilroy(w * 0.033, .semiBold))
             .lineLimit(1)
             .minimumScaleFactor(0.45)
         }
@@ -220,12 +220,12 @@ struct PassCardView: View {
     private func driverArea(_ w: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: w * 0.008) {
             Text("DRIVER")
-                .font(.system(size: w * 0.028, weight: .bold, design: .monospaced))
+                .font(.gilroy(w * 0.028, .bold))
                 .kerning(2)
                 .foregroundStyle(theme.ink.opacity(0.55))
             if stamped {
                 Text(model.driverName.uppercased())
-                    .font(.system(size: w * 0.085, weight: .black))
+                    .font(.gilroy(w * 0.085, .black))
                     .fontWidth(.condensed)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
@@ -235,13 +235,13 @@ struct PassCardView: View {
                     .transition(.scale(scale: 1.7).combined(with: .opacity))
                 if let dateText = PassDateStyle.dateAndTime.text(for: model.date) {
                     Text("STAMPED \(dateText.uppercased())")
-                        .font(.system(size: w * 0.026, weight: .semibold, design: .monospaced))
+                        .font(.gilroy(w * 0.026, .semiBold))
                         .foregroundStyle(theme.ink.opacity(0.6))
                         .transition(.opacity)
                 }
             } else {
                 Text("— HOLD TO STAMP —")
-                    .font(.system(size: w * 0.085, weight: .black))
+                    .font(.gilroy(w * 0.085, .black))
                     .fontWidth(.condensed)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
@@ -260,7 +260,7 @@ struct PassCardView: View {
                     .frame(width: w * 0.16, height: w * 0.12)
             }
             Text(theme.eventText.uppercased())
-                .font(.system(size: w * 0.03, weight: .bold))
+                .font(.gilroy(w * 0.03, .bold))
                 .kerning(1.5)
                 .lineLimit(2)
                 .foregroundStyle(theme.ink.opacity(0.75))
@@ -272,7 +272,7 @@ struct PassCardView: View {
     private func resultStamp(_ w: CGFloat) -> some View {
         if let result {
             Text(result.rawValue)
-                .font(.system(size: w * 0.11, weight: .black))
+                .font(.gilroy(w * 0.11, .black))
                 .kerning(4)
                 .foregroundStyle(result == .finished ? Color.green : Color(hex: "E10A17"))
                 .padding(.horizontal, w * 0.045)

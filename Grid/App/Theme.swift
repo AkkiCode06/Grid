@@ -13,9 +13,26 @@ enum Theme {
 }
 
 extension Font {
-    /// Monospaced "pit wall telemetry" style used for timers and counters.
+    /// App-wide "pit wall" style, now mapped onto the Gilroy family so the
+    /// whole app picks it up without touching every call site.
     static func telemetry(_ size: CGFloat, weight: Font.Weight = .semibold) -> Font {
-        .system(size: size, weight: weight, design: .monospaced)
+        let gilroy: GilroyWeight
+        if weight == .black {
+            gilroy = .black
+        } else if weight == .heavy {
+            gilroy = .heavy
+        } else if weight == .bold {
+            gilroy = .bold
+        } else if weight == .medium {
+            gilroy = .medium
+        } else if weight == .light || weight == .thin || weight == .ultraLight {
+            gilroy = .light
+        } else if weight == .regular {
+            gilroy = .regular
+        } else {
+            gilroy = .semiBold
+        }
+        return .gilroy(size, gilroy)
     }
 }
 

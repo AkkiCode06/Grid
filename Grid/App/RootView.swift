@@ -29,6 +29,7 @@ struct RootView: View {
         .animation(.easeInOut(duration: 0.35), value: session.phase)
         .preferredColorScheme(.dark)
         .onChange(of: scenePhase) { _, newPhase in
+            session.handleScenePhase(newPhase)
             if newPhase == .active {
                 session.tick()
             }

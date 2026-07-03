@@ -15,12 +15,6 @@ struct Circuit: Identifiable, Codable, Hashable {
 
     var isCustom: Bool { durationMinutes == nil }
 
-    /// Pit-wall/paddock view backdrop for the racing screen (supplied later).
-    var paddockBackdropAsset: String { "\(id)_paddock_backdrop" }
-
-    /// Bundled clip names (without extension) for flyby videos (supplied later).
-    var flybyClips: [String] { (1...5).map { "\(id)_paddock_flyby\($0)" } }
-
     func duration(customMinutes: Int) -> TimeInterval {
         TimeInterval((durationMinutes ?? customMinutes) * 60)
     }

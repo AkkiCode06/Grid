@@ -1,17 +1,17 @@
 import SwiftUI
 import AVFoundation
 
-/// Fires a car flyby at random 20–60s intervals. Plays a bundled clip for the
-/// seat when available; until real clips land, falls back to a motion-streak
-/// placeholder so the effect (and its timing) is fully testable now.
+/// Fires a car flyby at random 20–60s intervals. Plays a bundled clip for
+/// the circuit when available; until real clips land, falls back to a
+/// motion-streak placeholder so the effect (and its timing) is testable now.
 struct FlybyOverlayView: View {
-    let seat: Seat
+    let circuit: Circuit
 
     @State private var activeClipURL: URL?
     @State private var streakTrigger = 0
 
     private var clipURLs: [URL] {
-        AssetResolver.flybyClipURLs(for: seat)
+        AssetResolver.flybyClipURLs(for: circuit)
     }
 
     var body: some View {

@@ -13,7 +13,7 @@ struct ActiveSessionSnapshot: Codable {
     var driverName: String
     var circuitID: String
     var circuitName: String
-    var seatName: String
+    var teamName: String
     var sessionNumber: Int
     var startDate: Date
     var durationSeconds: TimeInterval

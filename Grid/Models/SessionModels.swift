@@ -4,7 +4,7 @@ import Foundation
 struct PassDetails: Hashable, Codable {
     var driverName: String
     var circuit: Circuit
-    var seat: Seat
+    var team: Team
     var issuedAt: Date
     var sessionNumber: Int
     var durationSeconds: TimeInterval

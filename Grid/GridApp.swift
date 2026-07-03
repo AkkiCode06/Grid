@@ -27,7 +27,7 @@ struct GridApp: App {
                     // Screenshot/UI-test hook: jump straight to an issued pass.
                     if ProcessInfo.processInfo.arguments.contains("-uitest-pass"),
                        let circuit = CircuitLibrary.all.first {
-                        session.issuePass(circuit: circuit, seat: circuit.seats[0])
+                        session.issuePass(circuit: circuit, team: TeamLibrary.all[0])
                     }
                     #endif
                     await StoreService.shared.start()

@@ -11,7 +11,7 @@ struct RaceActivityAttributes: ActivityAttributes {
     }
 
     var circuitName: String
-    var seatName: String
+    var teamName: String
     var sessionNumber: Int
 }
 #endif

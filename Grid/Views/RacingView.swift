@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-/// The locked-in screen: grandstand backdrop for the chosen circuit + seat,
+/// The locked-in screen: paddock/pit-wall view of the chosen circuit,
 /// random flybys, lap-based progress on the track outline, and a shamed but
 /// available DNF escape hatch.
 struct RacingView: View {
@@ -19,7 +19,7 @@ struct RacingView: View {
             backdrop
                 .ignoresSafeArea()
 
-            FlybyOverlayView(seat: pass.seat)
+            FlybyOverlayView(circuit: pass.circuit)
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
@@ -46,7 +46,7 @@ struct RacingView: View {
 
     @ViewBuilder
     private var backdrop: some View {
-        if let image = AssetResolver.backdropImage(for: pass.seat) {
+        if let image = AssetResolver.backdropImage(for: pass.circuit) {
             image
                 .resizable()
                 .scaledToFill()
@@ -61,7 +61,7 @@ struct RacingView: View {
                 .font(.telemetry(13, weight: .bold))
                 .kerning(3)
                 .foregroundStyle(Theme.textPrimary)
-            Text("\(pass.seat.name.uppercased()) • \(pass.sessionLabel)")
+            Text("\(pass.team.name.uppercased()) • \(pass.sessionLabel)")
                 .font(.telemetry(10))
                 .kerning(2)
                 .foregroundStyle(Theme.textSecondary)

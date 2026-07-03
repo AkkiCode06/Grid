@@ -34,12 +34,12 @@ final class SessionController {
 
     // MARK: - Flow
 
-    func issuePass(circuit: Circuit, seat: Seat) {
+    func issuePass(circuit: Circuit, team: Team) {
         guard case .idle = phase else { return }
         let pass = PassDetails(
             driverName: driverName,
             circuit: circuit,
-            seat: seat,
+            team: team,
             issuedAt: .now,
             sessionNumber: SharedStore.nextSessionNumber,
             durationSeconds: circuit.duration(customMinutes: customDurationMinutes)
@@ -68,7 +68,7 @@ final class SessionController {
             driverName: pass.driverName,
             circuitID: pass.circuit.id,
             circuitName: pass.circuit.name,
-            seatName: pass.seat.name,
+            teamName: pass.team.name,
             sessionNumber: pass.sessionNumber,
             startDate: startDate,
             durationSeconds: pass.durationSeconds,
@@ -99,16 +99,15 @@ final class SessionController {
     /// completion while the app was dead.
     func restoreOnLaunch() {
         guard case .idle = phase, let snapshot = SharedStore.loadActiveSession() else { return }
-        guard let circuit = CircuitLibrary.circuit(id: snapshot.circuitID),
-              let seat = circuit.seats.first(where: { $0.name == snapshot.seatName })
-                ?? circuit.seats.first else {
+        guard let circuit = CircuitLibrary.circuit(id: snapshot.circuitID) else {
             SharedStore.clearActiveSession()
             return
         }
+        let team = TeamLibrary.team(named: snapshot.teamName) ?? TeamLibrary.all[0]
         let pass = PassDetails(
             driverName: snapshot.driverName,
             circuit: circuit,
-            seat: seat,
+            team: team,
             issuedAt: snapshot.startDate,
             sessionNumber: snapshot.sessionNumber,
             durationSeconds: snapshot.durationSeconds
@@ -183,7 +182,7 @@ final class SessionController {
             driverName: pass.driverName,
             circuitID: pass.circuit.id,
             circuitName: pass.circuit.name,
-            seatName: pass.seat.name,
+            teamName: pass.team.name,
             sessionNumber: pass.sessionNumber,
             startDate: startDate,
             plannedSeconds: pass.durationSeconds,

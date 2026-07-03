@@ -1,13 +1,13 @@
 import SwiftUI
 
-/// Circuit selection: horizontally paged circuit cards with a per-circuit
-/// grandstand seat picker. The seat decides which backdrop and flyby clips
-/// play during the session.
+/// Circuit selection: horizontally paged circuit cards plus a team picker.
+/// You're in the paddock — the team you sign for stamps its name on your
+/// pass and applies its livery to it.
 struct HomeView: View {
     @Environment(SessionController.self) private var session
 
     @State private var selectedCircuitID: String = CircuitLibrary.all.first?.id ?? "monteCarlo"
-    @State private var seatSelections: [String: String] = [:]
+    @AppStorage("selectedTeamID") private var selectedTeamID = TeamLibrary.all[0].id
     @State private var customMinutes: Int = 30
     @State private var showingRaceLog = false
     @State private var showingSettings = false
@@ -20,9 +20,8 @@ struct HomeView: View {
         CircuitLibrary.circuit(id: selectedCircuitID) ?? CircuitLibrary.all[0]
     }
 
-    private func selectedSeat(for circuit: Circuit) -> Seat {
-        let seatID = seatSelections[circuit.id]
-        return circuit.seats.first { $0.id == seatID } ?? circuit.seats[0]
+    private var selectedTeam: Team {
+        TeamLibrary.team(id: selectedTeamID) ?? TeamLibrary.all[0]
     }
 
     private func isLocked(_ circuit: Circuit) -> Bool {
@@ -38,10 +37,7 @@ struct HomeView: View {
                     ForEach(CircuitLibrary.all) { circuit in
                         CircuitCardView(
                             circuit: circuit,
-                            selectedSeatID: Binding(
-                                get: { seatSelections[circuit.id] ?? circuit.seats[0].id },
-                                set: { seatSelections[circuit.id] = $0 }
-                            ),
+                            selectedTeamID: $selectedTeamID,
                             customMinutes: $customMinutes,
                             isLocked: isLocked(circuit)
                         )
@@ -64,6 +60,9 @@ struct HomeView: View {
             .onAppear { customMinutes = session.customDurationMinutes }
             .onChange(of: customMinutes) { _, newValue in
                 session.customDurationMinutes = newValue
+            }
+            .onChange(of: selectedTeamID) { _, _ in
+                PassThemeStore.shared.applyTeam(selectedTeam)
             }
         }
     }
@@ -115,10 +114,7 @@ struct HomeView: View {
                 showingPaywall = true
             } else {
                 Haptics.impact(.medium)
-                session.issuePass(
-                    circuit: selectedCircuit,
-                    seat: selectedSeat(for: selectedCircuit)
-                )
+                session.issuePass(circuit: selectedCircuit, team: selectedTeam)
             }
         } label: {
             HStack {

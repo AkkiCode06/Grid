@@ -60,7 +60,7 @@ private struct RaceLogRow: View {
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
-                Text("\(circuit?.flag ?? "🏁") \(record.seatName.uppercased()) • \(String(format: "SESSION %03d", record.sessionNumber))")
+                Text("\(circuit?.flag ?? "🏁") \(record.teamName.uppercased()) • \(String(format: "SESSION %03d", record.sessionNumber))")
                     .font(.telemetry(9))
                     .kerning(1)
                     .foregroundStyle(Theme.textSecondary)

@@ -16,7 +16,7 @@ final class LiveActivityController {
         }
         let attributes = RaceActivityAttributes(
             circuitName: pass.circuit.name,
-            seatName: pass.seat.name,
+            teamName: pass.team.name,
             sessionNumber: pass.sessionNumber
         )
         let endDate = startDate.addingTimeInterval(pass.durationSeconds)

@@ -15,7 +15,7 @@ struct RaceLiveActivity: Widget {
                         Text(context.attributes.circuitName)
                             .font(.caption.weight(.semibold))
                             .lineLimit(1)
-                        Text(context.attributes.seatName.uppercased())
+                        Text(context.attributes.teamName.uppercased())
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }

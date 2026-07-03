@@ -7,7 +7,7 @@ struct PassCardModel {
     let circuitName: String
     let flag: String
     let country: String
-    let seatName: String
+    let teamName: String
     let driverName: String
     let sessionNumber: Int
     let date: Date
@@ -19,7 +19,7 @@ struct PassCardModel {
         circuitName = pass.circuit.name
         flag = pass.circuit.flag
         country = pass.circuit.country
-        seatName = pass.seat.name
+        teamName = pass.team.name
         driverName = pass.driverName
         sessionNumber = pass.sessionNumber
         date = pass.issuedAt
@@ -33,7 +33,7 @@ struct PassCardModel {
         circuitName = record.circuitName
         flag = circuit?.flag ?? "🏁"
         country = circuit?.country ?? ""
-        seatName = record.seatName
+        teamName = record.teamName
         driverName = record.driverName
         sessionNumber = record.sessionNumber
         date = record.startDate
@@ -197,7 +197,7 @@ struct PassCardView: View {
                 }
             }
             HStack(spacing: w * 0.015) {
-                Text(model.seatName.uppercased())
+                Text(model.teamName.uppercased())
                 if let dateText = theme.dateStyle.text(for: model.date) {
                     Text("•")
                     Text(dateText.uppercased())
@@ -208,7 +208,7 @@ struct PassCardView: View {
             }
             .font(.system(size: w * 0.033, weight: .semibold, design: .monospaced))
             .lineLimit(1)
-            .minimumScaleFactor(0.6)
+            .minimumScaleFactor(0.45)
         }
         .foregroundStyle(theme.accent)
         .padding(.horizontal, w * 0.06)

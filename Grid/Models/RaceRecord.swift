@@ -7,7 +7,7 @@ final class RaceRecord {
     var driverName: String
     var circuitID: String
     var circuitName: String
-    var seatName: String
+    @Attribute(originalName: "seatName") var teamName: String
     var sessionNumber: Int
     var startDate: Date
     var plannedSeconds: TimeInterval
@@ -18,7 +18,7 @@ final class RaceRecord {
     init(driverName: String,
          circuitID: String,
          circuitName: String,
-         seatName: String,
+         teamName: String,
          sessionNumber: Int,
          startDate: Date,
          plannedSeconds: TimeInterval,
@@ -28,7 +28,7 @@ final class RaceRecord {
         self.driverName = driverName
         self.circuitID = circuitID
         self.circuitName = circuitName
-        self.seatName = seatName
+        self.teamName = teamName
         self.sessionNumber = sessionNumber
         self.startDate = startDate
         self.plannedSeconds = plannedSeconds

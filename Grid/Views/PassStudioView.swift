@@ -13,7 +13,7 @@ struct PassStudioView: View {
         let pass = PassDetails(
             driverName: driverName.isEmpty ? "DRIVER" : driverName,
             circuit: circuit,
-            seat: circuit.seats[0],
+            team: TeamLibrary.all[0],
             issuedAt: .now,
             sessionNumber: SharedStore.nextSessionNumber,
             durationSeconds: circuit.duration(customMinutes: 30)

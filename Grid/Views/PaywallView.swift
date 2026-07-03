@@ -1,7 +1,7 @@
 import SwiftUI
 import StoreKit
 
-/// One-time unlock for all circuits and seats. Product IDs live in AppConfig;
+/// One-time unlock for all circuits. Product IDs live in AppConfig;
 /// until they exist in App Store Connect this degrades to an informative
 /// stub so the flow is still navigable.
 struct PaywallView: View {

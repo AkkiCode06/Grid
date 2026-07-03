@@ -75,6 +75,14 @@ final class PassThemeStore {
         theme = PassTheme()
     }
 
+    /// Picking a team applies its livery to the pass. Everything stays
+    /// individually tweakable in Pass Studio afterwards.
+    func applyTeam(_ team: Team) {
+        theme.accentHex = team.accentHex
+        theme.inkHex = team.inkHex
+        theme.foilHex = team.foilHex
+    }
+
     private func save() {
         if let data = try? JSONEncoder().encode(theme) {
             UserDefaults.standard.set(data, forKey: Self.key)

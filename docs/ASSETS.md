@@ -5,6 +5,13 @@ exact names and they're picked up automatically, no code changes. Until an
 asset exists, views fall back to gradient backdrops and a streak-flyby
 placeholder.
 
+**Concept:** the user is a team member standing in the paddock / on the pit
+wall. One backdrop per circuit (shared by all teams), and flyby clips show
+mixed generic cars passing — teams are an identity/livery layer in the UI,
+not separate footage.
+
+## Totals: 6 backdrops + 30 clips
+
 ## Specs
 
 | Type | Format | Details |
@@ -14,42 +21,42 @@ placeholder.
 | SFX (optional) | `.m4a`/`.mp3` bundled | `whoosh`, `stamp`, `light`, `lightsout` |
 
 Flyby clips are shown full-bleed over the backdrop with `.resizeAspectFill`,
-so shoot/generate them as the **same grandstand view as the backdrop, with a
-car passing through** — the cut between still backdrop and clip should be
-invisible (same framing, same light).
+so generate each clip **from its backdrop still (image-to-video)** — same
+framing, same light — so the cut between still and clip is invisible.
 
 ## Naming convention
 
-- Backdrop: `<circuitID>_<seatID>_backdrop`
-- Clips: `<circuitID>_<seatID>_flyby1` … `flyby3` (`.mp4`)
+- Backdrop: `<circuitID>_paddock_backdrop`
+- Clips: `<circuitID>_paddock_flyby1` … `flyby5` (`.mp4`)
 
 Circuit IDs: `monteCarlo`, `marina`, `midlands`, `hachi`, `ardennes`, `custom`
-Seat IDs: `mainStraight`, `hairpin`, `chicane`
 
-## Shot list (18 backdrops + 54 clips)
+## Scene briefs (one per circuit)
 
-Seat angle briefs — same for every circuit, flavoured by its setting:
+All from the same vantage: **standing at the pit wall inside the paddock,
+looking across the wall onto the main straight**, portrait framing, track
+filling the lower half, sky/setting filling the top.
 
-- **mainStraight** — grandstand head-on view of a straight; flybys are fast
-  left-to-right blurs at full speed
-- **hairpin** — elevated view over a tight corner; flybys are slow-in,
-  rotate, hard accelerate out
-- **chicane** — low trackside view of a left-right flick; flybys snap
-  direction mid-frame
+| Circuit | Setting flavour |
+| --- | --- |
+| `monteCarlo` (25 min) | Golden-hour harbour street circuit; yachts and apartment blocks beyond the armco; warm sunset haze |
+| `marina` (45 min) | Night race under floodlights; futuristic hotel glow and marina lights; deep violet sky |
+| `midlands` (60 min) | Overcast British afternoon; green infield, old grandstands on the far side; flat grey-blue light |
+| `hachi` (90 min) | Clear Japanese day; distant ferris wheel silhouette; clean bright light |
+| `ardennes` (120 min) | Misty forest circuit; spruce treeline and elevation beyond the straight; cool green fog |
+| `custom` | Anonymous test facility; grey sky, cones, timing boards, empty grandstand scaffolding |
 
-| Circuit | Setting flavour | Files |
-| --- | --- | --- |
-| `monteCarlo` (25 min) | Sunset harbour street circuit, yachts, armco barriers | `monteCarlo_{seat}_backdrop` + 3 clips each |
-| `marina` (45 min) | Night race, floodlights, marina + hotel glow | `marina_{seat}_backdrop` + 3 clips each |
-| `midlands` (60 min) | Overcast British daytime, green infield, old grandstands | `midlands_{seat}_backdrop` + 3 clips each |
-| `hachi` (90 min) | Japanese daytime, figure-eight character, ferris wheel silhouette | `hachi_{seat}_backdrop` + 3 clips each |
-| `ardennes` (120 min) | Misty forest, elevation change, spruce treeline | `ardennes_{seat}_backdrop` + 3 clips each |
-| `custom` | Anonymous test facility, grey sky, cones + timing boards | `custom_{seat}_backdrop` + 3 clips each |
+## Clip motion briefs (5 per circuit, from the same backdrop still)
 
-**Priority order if generating in batches:** the two free circuits first
-(`monteCarlo`, `midlands`), mainStraight seat first — that's the default
-selection users see.
+1. Single car blasts past left → right at full speed, heavy motion blur, heat haze
+2. Single car blasts past right → left, slightly different speed feel
+3. Two cars nose-to-tail flash past
+4. Car peels off the straight into the pit lane, slows past camera (paddock flavour)
+5. Distant car crosses on the far side of the straight, subtle — a "quiet" flyby
 
-**Legal:** generic open-wheel car silhouettes only — no team liveries,
-sponsor logos, driver helmets, or official circuit signage/branding in any
-generated frame.
+**Priority order if generating in batches:** free circuits first
+(`monteCarlo`, `midlands`), clips 1–2 first — those carry most sessions.
+
+**Legal:** generic open-wheel car silhouettes only — no team liveries that
+copy real teams, no sponsor logos, no text, no driver helmets with real
+designs, no official circuit signage/branding in any generated frame.

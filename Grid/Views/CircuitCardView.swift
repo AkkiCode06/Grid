@@ -2,7 +2,7 @@ import SwiftUI
 
 struct CircuitCardView: View {
     let circuit: Circuit
-    @Binding var selectedSeatID: String
+    @Binding var selectedTeamID: String
     @Binding var customMinutes: Int
     let isLocked: Bool
 
@@ -67,7 +67,7 @@ struct CircuitCardView: View {
                 .padding(.horizontal, 8)
             }
 
-            seatPicker
+            teamPicker
         }
         .padding(20)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -78,39 +78,51 @@ struct CircuitCardView: View {
         )
     }
 
-    private var seatPicker: some View {
+    private var teamPicker: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("GRANDSTAND")
+            Text("SIGN FOR A TEAM")
                 .font(.telemetry(10))
                 .kerning(2)
                 .foregroundStyle(Theme.textTertiary)
-            HStack(spacing: 8) {
-                ForEach(circuit.seats) { seat in
-                    let isSelected = seat.id == selectedSeatID
-                    Button {
-                        Haptics.impact(.light)
-                        selectedSeatID = seat.id
-                    } label: {
-                        Text(seat.name)
-                            .font(.system(size: 11, weight: .semibold))
-                            .multilineTextAlignment(.center)
-                            .lineLimit(2)
-                            .frame(maxWidth: .infinity, minHeight: 40)
-                            .padding(.vertical, 6)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(TeamLibrary.all) { team in
+                        let isSelected = team.id == selectedTeamID
+                        Button {
+                            Haptics.impact(.light)
+                            selectedTeamID = team.id
+                        } label: {
+                            HStack(spacing: 7) {
+                                Circle()
+                                    .fill(Color(hex: team.accentHex))
+                                    .frame(width: 13, height: 13)
+                                    .overlay(
+                                        Circle().strokeBorder(
+                                            .white.opacity(0.25), lineWidth: 1
+                                        )
+                                    )
+                                Text(team.name)
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .lineLimit(1)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 9)
                             .background(
-                                isSelected ? Theme.raceRed.opacity(0.25) : Theme.cardHighlight,
-                                in: RoundedRectangle(cornerRadius: 10)
+                                isSelected
+                                    ? Color(hex: team.accentHex).opacity(0.22)
+                                    : Theme.cardHighlight,
+                                in: Capsule()
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .strokeBorder(
-                                        isSelected ? Theme.raceRed : .clear,
-                                        lineWidth: 1.5
-                                    )
+                                Capsule().strokeBorder(
+                                    isSelected ? Color(hex: team.accentHex) : .clear,
+                                    lineWidth: 1.5
+                                )
                             )
                             .foregroundStyle(
                                 isSelected ? Theme.textPrimary : Theme.textSecondary
                             )
+                        }
                     }
                 }
             }

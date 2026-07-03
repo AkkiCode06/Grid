@@ -1,32 +1,31 @@
-//
-//  GridApp.swift
-//  Grid
-//
-//  Created by Akshat Barjatya on 03/07/2026.
-//
-
 import SwiftUI
 import SwiftData
 
 @main
 struct GridApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+    private let modelContainer: ModelContainer
+    @State private var session: SessionController
 
+    init() {
+        AppConfig.registerDefaultPreferences()
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            modelContainer = try ModelContainer(for: RaceRecord.self)
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
-    }()
+        _session = State(initialValue: SessionController())
+    }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
+                .environment(session)
+                .task {
+                    session.attachModelContext(modelContainer.mainContext)
+                    session.restoreOnLaunch()
+                    await StoreService.shared.start()
+                }
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(modelContainer)
     }
 }

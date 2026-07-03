@@ -6,20 +6,123 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A1000000000000000000CE01 /* GridMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A2000000000000000000CE01 /* GridMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A1000000000000000000CE02 /* GridWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A2000000000000000000CE02 /* GridWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AA000000000000000000CE01 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6D88E0DE2FF798FB00A2CE30 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A5000000000000000000CE01;
+			remoteInfo = GridMonitor;
+		};
+		AA000000000000000000CE02 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6D88E0DE2FF798FB00A2CE30 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A5000000000000000000CE02;
+			remoteInfo = GridWidgets;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A8000000000000000000CE01 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A1000000000000000000CE01 /* GridMonitor.appex in Embed Foundation Extensions */,
+				A1000000000000000000CE02 /* GridWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		6D88E0E62FF798FB00A2CE30 /* Grid.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Grid.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A2000000000000000000CE01 /* GridMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GridMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A2000000000000000000CE02 /* GridWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GridWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A3E00000000000000000CE01 /* Exceptions for "GridMonitor" folder in "GridMonitor" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				GridMonitor.entitlements,
+				Info.plist,
+			);
+			target = A5000000000000000000CE01 /* GridMonitor */;
+		};
+		A3E00000000000000000CE02 /* Exceptions for "GridWidgets" folder in "GridWidgets" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				GridWidgets.entitlements,
+				Info.plist,
+			);
+			target = A5000000000000000000CE02 /* GridWidgets */;
+		};
+		A3E00000000000000000CE03 /* Exceptions for "Grid" folder in "Grid" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Grid.entitlements,
+			);
+			target = 6D88E0E52FF798FB00A2CE30 /* Grid */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		6D88E0E82FF798FB00A2CE30 /* Grid */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A3E00000000000000000CE03 /* Exceptions for "Grid" folder in "Grid" target */,
+			);
 			path = Grid;
+			sourceTree = "<group>";
+		};
+		A3000000000000000000CE01 /* GridMonitor */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A3E00000000000000000CE01 /* Exceptions for "GridMonitor" folder in "GridMonitor" target */,
+			);
+			path = GridMonitor;
+			sourceTree = "<group>";
+		};
+		A3000000000000000000CE02 /* GridWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A3E00000000000000000CE02 /* Exceptions for "GridWidgets" folder in "GridWidgets" target */,
+			);
+			path = GridWidgets;
+			sourceTree = "<group>";
+		};
+		A3000000000000000000CE03 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		6D88E0E32FF798FB00A2CE30 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A4000000000000000000CE01 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A4000000000000000000CE02 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +136,9 @@
 			isa = PBXGroup;
 			children = (
 				6D88E0E82FF798FB00A2CE30 /* Grid */,
+				A3000000000000000000CE01 /* GridMonitor */,
+				A3000000000000000000CE02 /* GridWidgets */,
+				A3000000000000000000CE03 /* Shared */,
 				6D88E0E72FF798FB00A2CE30 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +147,8 @@
 			isa = PBXGroup;
 			children = (
 				6D88E0E62FF798FB00A2CE30 /* Grid.app */,
+				A2000000000000000000CE01 /* GridMonitor.appex */,
+				A2000000000000000000CE02 /* GridWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -55,13 +163,17 @@
 				6D88E0E22FF798FB00A2CE30 /* Sources */,
 				6D88E0E32FF798FB00A2CE30 /* Frameworks */,
 				6D88E0E42FF798FB00A2CE30 /* Resources */,
+				A8000000000000000000CE01 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				A9000000000000000000CE01 /* PBXTargetDependency */,
+				A9000000000000000000CE02 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				6D88E0E82FF798FB00A2CE30 /* Grid */,
+				A3000000000000000000CE03 /* Shared */,
 			);
 			name = Grid;
 			packageProductDependencies = (
@@ -69,6 +181,52 @@
 			productName = Grid;
 			productReference = 6D88E0E62FF798FB00A2CE30 /* Grid.app */;
 			productType = "com.apple.product-type.application";
+		};
+		A5000000000000000000CE01 /* GridMonitor */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AC000000000000000000CE01 /* Build configuration list for PBXNativeTarget "GridMonitor" */;
+			buildPhases = (
+				A6000000000000000000CE01 /* Sources */,
+				A4000000000000000000CE01 /* Frameworks */,
+				A7000000000000000000CE01 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A3000000000000000000CE01 /* GridMonitor */,
+				A3000000000000000000CE03 /* Shared */,
+			);
+			name = GridMonitor;
+			packageProductDependencies = (
+			);
+			productName = GridMonitor;
+			productReference = A2000000000000000000CE01 /* GridMonitor.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		A5000000000000000000CE02 /* GridWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AC000000000000000000CE02 /* Build configuration list for PBXNativeTarget "GridWidgets" */;
+			buildPhases = (
+				A6000000000000000000CE02 /* Sources */,
+				A4000000000000000000CE02 /* Frameworks */,
+				A7000000000000000000CE02 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A3000000000000000000CE02 /* GridWidgets */,
+				A3000000000000000000CE03 /* Shared */,
+			);
+			name = GridWidgets;
+			packageProductDependencies = (
+			);
+			productName = GridWidgets;
+			productReference = A2000000000000000000CE02 /* GridWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -81,6 +239,12 @@
 				LastUpgradeCheck = 2660;
 				TargetAttributes = {
 					6D88E0E52FF798FB00A2CE30 = {
+						CreatedOnToolsVersion = 26.6;
+					};
+					A5000000000000000000CE01 = {
+						CreatedOnToolsVersion = 26.6;
+					};
+					A5000000000000000000CE02 = {
 						CreatedOnToolsVersion = 26.6;
 					};
 				};
@@ -100,12 +264,28 @@
 			projectRoot = "";
 			targets = (
 				6D88E0E52FF798FB00A2CE30 /* Grid */,
+				A5000000000000000000CE01 /* GridMonitor */,
+				A5000000000000000000CE02 /* GridWidgets */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		6D88E0E42FF798FB00A2CE30 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A7000000000000000000CE01 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A7000000000000000000CE02 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +302,34 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A6000000000000000000CE01 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A6000000000000000000CE02 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A9000000000000000000CE01 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A5000000000000000000CE01 /* GridMonitor */;
+			targetProxy = AA000000000000000000CE01 /* PBXContainerItemProxy */;
+		};
+		A9000000000000000000CE02 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A5000000000000000000CE02 /* GridWidgets */;
+			targetProxy = AA000000000000000000CE02 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		6D88E0F12FF798FD00A2CE30 /* Debug */ = {
@@ -178,7 +385,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -236,7 +443,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -251,11 +458,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Grid/Grid.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = A3894QN8LP;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -283,11 +492,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Grid/Grid.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = A3894QN8LP;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -310,6 +521,110 @@
 			};
 			name = Release;
 		};
+		AB000000000000000000CE01 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = GridMonitor/GridMonitor.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = A3894QN8LP;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GridMonitor/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Grid Monitor";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Akki.Grid.GridMonitor;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AB000000000000000000CE02 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = GridMonitor/GridMonitor.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = A3894QN8LP;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GridMonitor/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Grid Monitor";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Akki.Grid.GridMonitor;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		AB000000000000000000CE03 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = GridWidgets/GridWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = A3894QN8LP;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GridWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Grid Widgets";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Akki.Grid.GridWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AB000000000000000000CE04 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = GridWidgets/GridWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = A3894QN8LP;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GridWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Grid Widgets";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Akki.Grid.GridWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -327,6 +642,24 @@
 			buildConfigurations = (
 				6D88E0F42FF798FD00A2CE30 /* Debug */,
 				6D88E0F52FF798FD00A2CE30 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AC000000000000000000CE01 /* Build configuration list for PBXNativeTarget "GridMonitor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AB000000000000000000CE01 /* Debug */,
+				AB000000000000000000CE02 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AC000000000000000000CE02 /* Build configuration list for PBXNativeTarget "GridWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AB000000000000000000CE03 /* Debug */,
+				AB000000000000000000CE04 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

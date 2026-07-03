@@ -32,10 +32,17 @@ struct PaddockPassView: View {
 
             Spacer()
 
-            PassCardView(model: PassCardModel(pass: pass), stamped: stamped, shimmer: shimmer)
-                .padding(.horizontal, 28)
-                .scaleEffect(isPressing && !stamped ? 0.97 : 1)
-                .animation(.easeOut(duration: 0.2), value: isPressing)
+            PassCardView(
+                model: PassCardModel(pass: pass),
+                stamped: stamped,
+                shimmer: shimmer,
+                motionShine: true
+            )
+            .padding(.horizontal, 28)
+            .scaleEffect(isPressing && !stamped ? 0.97 : 1)
+            .animation(.easeOut(duration: 0.2), value: isPressing)
+            .onAppear { MotionTilt.shared.start() }
+            .onDisappear { MotionTilt.shared.stop() }
 
             Spacer()
 

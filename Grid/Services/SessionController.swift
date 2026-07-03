@@ -128,17 +128,16 @@ final class SessionController {
         case .background:
             guard pitUntil == nil else { return } // pit stop = licensed to leave
             awaySince = .now
-            NotificationService.scheduleFlagAlerts()
             Task(priority: .userInitiated) {
-                // Set yellow flag with a stale date that triggers the red
-                // escalation in the widget once the user has been away too long.
+                // Yellow flag now (with an alert so the phone buzzes); the
+                // stale date makes the widget escalate to red on its own once
+                // the user's been away too long — no local notifications.
                 await liveActivity.setFlag(
                     "yellow",
                     staleDate: Date.now.addingTimeInterval(NotificationService.redDelay)
                 )
             }
         case .active:
-            NotificationService.cancelFlagAlerts()
             if let away = awaySince {
                 let elapsed = Date.now.timeIntervalSince(away)
                 awaySince = nil

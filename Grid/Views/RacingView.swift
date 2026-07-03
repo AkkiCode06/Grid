@@ -12,9 +12,16 @@ struct RacingView: View {
 
     @Environment(SessionController.self) private var session
     @State private var showingPitPicker = false
+    @State private var pitPickerTask: Task<Void, Never>?
 
     private var endDate: Date {
         startDate.addingTimeInterval(pass.durationSeconds)
+    }
+
+    private func dismissPitPicker() {
+        pitPickerTask?.cancel()
+        pitPickerTask = nil
+        withAnimation { showingPitPicker = false }
     }
 
     var body: some View {
@@ -34,14 +41,14 @@ struct RacingView: View {
                         .padding(.vertical, 16)
                         .padding(.leading, 8)
 
-                        TrackerView(pass: pass, startDate: startDate)
+                        TrackerView(pass: pass, startDate: startDate, userInPit: session.pitUntil != nil)
                             .padding(12)
                     }
                 } else {
                     VStack(spacing: 0) {
                         header
                             .padding(.top, 8)
-                        TrackerView(pass: pass, startDate: startDate)
+                        TrackerView(pass: pass, startDate: startDate, userInPit: session.pitUntil != nil)
                             .frame(maxHeight: .infinity)
                             .padding(.horizontal, 8)
                         controls
@@ -169,10 +176,19 @@ struct RacingView: View {
             }
         } else if showingPitPicker {
             HStack(spacing: 0) {
+                Button {
+                    Haptics.impact(.light)
+                    dismissPitPicker()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.gilroy(12, .bold))
+                        .frame(width: 38, height: 38)
+                }
+                Divider().frame(height: 20).background(Color.white.opacity(0.3))
                 ForEach([5, 10, 15], id: \.self) { mins in
                     Button {
                         Haptics.impact(.medium)
-                        showingPitPicker = false
+                        dismissPitPicker()
                         session.enterPitStop(minutes: mins)
                     } label: {
                         Text("\(mins)M")
@@ -193,6 +209,16 @@ struct RacingView: View {
                     .strokeBorder(.yellow.opacity(0.8), lineWidth: 1.5)
             )
             .foregroundStyle(.yellow)
+            .onAppear {
+                // Auto-revert to the plain button if no choice is made.
+                pitPickerTask?.cancel()
+                pitPickerTask = Task {
+                    try? await Task.sleep(for: .seconds(30))
+                    if !Task.isCancelled {
+                        await MainActor.run { withAnimation { showingPitPicker = false } }
+                    }
+                }
+            }
         } else {
             Button {
                 Haptics.impact(.light)
@@ -228,6 +254,7 @@ struct RacingView: View {
 struct TrackerView: View {
     let pass: PassDetails
     let startDate: Date
+    var userInPit: Bool = false
 
     private let inset: CGFloat = 36
 
@@ -262,26 +289,33 @@ struct TrackerView: View {
                         )
                         .padding(inset)
 
-                    // Rivals
-                    ForEach(RivalGrid.all) { rival in
-                        let fraction = rival.lapFraction(
-                            elapsed: elapsed,
-                            lapSeconds: pass.circuit.lapSeconds,
-                            sessionSeed: pass.sessionNumber
-                        )
+                    // Rivals — each makes one 5-minute pit stop (never in
+                    // the final 15 minutes); the car freezes and shows a
+                    // pit badge while being serviced.
+                    let sim = RaceSimulation(
+                        seed: pass.sessionNumber,
+                        duration: pass.durationSeconds,
+                        lapSeconds: pass.circuit.lapSeconds
+                    )
+                    ForEach(sim.rivals) { state in
+                        let inPit = state.isInPit(elapsed: elapsed)
                         CarMarker(
-                            code: rival.code,
-                            color: Color(hex: rival.colorHex),
-                            isUser: false
+                            code: state.rival.code,
+                            color: Color(hex: state.rival.colorHex),
+                            isUser: false,
+                            inPit: inPit
                         )
-                        .position(track.point(at: fraction))
+                        .position(track.point(at: state.lapFraction(
+                            elapsed: elapsed, lapSeconds: pass.circuit.lapSeconds
+                        )))
                     }
 
                     // The user
                     CarMarker(
                         code: "YOU",
                         color: Color(hex: PassThemeStore.shared.theme.accentHex),
-                        isUser: true
+                        isUser: true,
+                        inPit: userInPit
                     )
                     .position(track.point(at: userFraction))
                 }
@@ -290,26 +324,38 @@ struct TrackerView: View {
     }
 }
 
-/// F1-TV style marker: coloured dot with a three-letter tag.
+/// F1-TV style marker: coloured dot with a three-letter tag, plus a yellow
+/// wrench badge while the car is being serviced in the pits.
 struct CarMarker: View {
     let code: String
     let color: Color
     let isUser: Bool
+    var inPit: Bool = false
 
     var body: some View {
         VStack(spacing: 3) {
-            Text(code)
-                .font(.gilroy(isUser ? 11 : 9, isUser ? .black : .bold))
-                .kerning(0.5)
-                .padding(.horizontal, isUser ? 7 : 5)
-                .padding(.vertical, 2.5)
-                .background(.black.opacity(0.65), in: Capsule())
-                .foregroundStyle(isUser ? .white : .white.opacity(0.85))
-                .overlay(
-                    Capsule().strokeBorder(
-                        isUser ? color : .clear, lineWidth: 1.5
+            HStack(spacing: 3) {
+                if inPit {
+                    Image(systemName: "wrench.and.screwdriver.fill")
+                        .font(.system(size: isUser ? 9 : 7))
+                        .foregroundStyle(.yellow)
+                }
+                Text(code)
+                    .font(.gilroy(isUser ? 11 : 9, isUser ? .black : .bold))
+                    .kerning(0.5)
+                    .foregroundStyle(
+                        inPit ? .yellow : (isUser ? .white : .white.opacity(0.85))
                     )
+            }
+            .padding(.horizontal, isUser ? 7 : 5)
+            .padding(.vertical, 2.5)
+            .background(.black.opacity(0.65), in: Capsule())
+            .overlay(
+                Capsule().strokeBorder(
+                    inPit ? .yellow.opacity(0.8) : (isUser ? color : .clear),
+                    lineWidth: 1.5
                 )
+            )
             Circle()
                 .fill(color)
                 .frame(width: isUser ? 15 : 11, height: isUser ? 15 : 11)
@@ -319,8 +365,10 @@ struct CarMarker: View {
                     )
                 )
                 .shadow(color: color.opacity(0.8), radius: isUser ? 6 : 3)
+                .opacity(inPit ? 0.55 : 1)
         }
         .offset(y: -12)
+        .animation(.easeInOut(duration: 0.3), value: inPit)
     }
 }
 

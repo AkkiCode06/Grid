@@ -1,12 +1,16 @@
 import SwiftUI
+import SwiftData
 
 /// Full-screen immersive circuit selection matching the racing view.
 /// Swipe left/right for circuits (TabView with transparent pages).
 /// Photorealistic flyover cycling between circuit and city modes.
 struct HomeView: View {
     @Environment(SessionController.self) private var session
+    @Query(sort: \RaceRecord.startDate, order: .reverse) private var raceRecords: [RaceRecord]
 
     @State private var selectedCircuitID: String = CircuitLibrary.all.first?.id ?? "monteCarlo"
+    @AppStorage("hasSeenSwipeHint") private var hasSeenSwipeHint = false
+    @State private var swipeHintVisible = false
     @AppStorage("selectedTeamID") private var selectedTeamID = TeamLibrary.all[0].id
     @State private var customMinutes: Int = 30
     @State private var showingRaceLog = false
@@ -58,6 +62,7 @@ struct HomeView: View {
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .ignoresSafeArea()
+            .overlay { navigationArrows }
 
             // Foreground UI
             VStack(spacing: 0) {
@@ -67,7 +72,7 @@ struct HomeView: View {
                 // Bottom overlay area
                 VStack(spacing: 24) {
                     circuitInfoOverlay
-                    teamPicker
+                    statsOverlay
                     issueButton
                 }
                 .padding(.horizontal, 24)
@@ -83,12 +88,36 @@ struct HomeView: View {
                     .padding(.bottom, -64)
                 )
             }
+
+            // First-run coach mark: show how to swipe between circuits.
+            if swipeHintVisible {
+                SwipeHintView()
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+            }
         }
         .sheet(isPresented: $showingRaceLog) { RaceLogView() }
         .sheet(isPresented: $showingSettings) { SettingsView() }
         .sheet(isPresented: $showingPaywall) { PaywallView() }
         .sheet(isPresented: $showingPassStudio) { PassStudioView() }
-        .onAppear { customMinutes = session.customDurationMinutes }
+        .onAppear {
+            customMinutes = session.customDurationMinutes
+            if !hasSeenSwipeHint {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    withAnimation(.easeIn(duration: 0.5)) { swipeHintVisible = true }
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 9.0) {
+                    hasSeenSwipeHint = true
+                    withAnimation(.easeOut(duration: 0.5)) { swipeHintVisible = false }
+                }
+            }
+        }
+        .onChange(of: selectedCircuitID) { _, _ in
+            if !hasSeenSwipeHint || swipeHintVisible {
+                hasSeenSwipeHint = true
+                withAnimation(.easeOut(duration: 0.3)) { swipeHintVisible = false }
+            }
+        }
         .onChange(of: customMinutes) { _, newValue in
             session.customDurationMinutes = newValue
         }
@@ -184,51 +213,34 @@ struct HomeView: View {
         .zIndex(1)
     }
 
-    private var teamPicker: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("SIGN FOR A TEAM")
+    private var statsOverlay: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("LAST SESSION STATS")
                 .font(.gilroy(11, .bold))
                 .kerning(2)
                 .foregroundStyle(.white.opacity(0.6))
             
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ForEach(TeamLibrary.all) { team in
-                        let isSelected = team.id == selectedTeamID
-                        Button {
-                            Haptics.impact(.light)
-                            selectedTeamID = team.id
-                        } label: {
-                            HStack(spacing: 8) {
-                                Circle()
-                                    .fill(Color(hex: team.accentHex))
-                                    .frame(width: 14, height: 14)
-                                    .overlay(
-                                        Circle().strokeBorder(.white.opacity(0.3), lineWidth: 1)
-                                    )
-                                Text(team.name)
-                                    .font(.gilroy(13, .bold))
-                                    .lineLimit(1)
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                            .background(
-                                isSelected ? Color(hex: team.accentHex).opacity(0.3) : .black.opacity(0.5),
-                                in: Capsule()
-                            )
-                            .overlay(
-                                Capsule().strokeBorder(
-                                    isSelected ? Color(hex: team.accentHex) : .white.opacity(0.15),
-                                    lineWidth: 1.5
-                                )
-                            )
-                            .foregroundStyle(isSelected ? .white : .white.opacity(0.7))
-                        }
-                    }
-                }
+            if let lastRecord = raceRecords.first(where: { $0.circuitID == selectedCircuitID }) {
+                let isFinished = lastRecord.result == .finished
+                Text(formatRecordResult(lastRecord, isFinished: isFinished))
+                    .font(.gilroy(13, .bold))
+                    .foregroundStyle(isFinished ? Theme.gold : Theme.raceRed)
+            } else {
+                Text("NEVER RACED")
+                    .font(.gilroy(13, .bold))
+                    .foregroundStyle(.white.opacity(0.8))
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .zIndex(1)
+    }
+
+    private func formatRecordResult(_ record: RaceRecord, isFinished: Bool) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        let dateString = formatter.string(from: record.startDate).uppercased()
+        return isFinished ? "COMPLETED ON \(dateString)" : "DNF (\(dateString))"
     }
 
     private var issueButton: some View {
@@ -253,5 +265,77 @@ struct HomeView: View {
             .shadow(color: Theme.raceRed.opacity(0.4), radius: 8, x: 0, y: 4)
         }
         .zIndex(1)
+    }
+
+    private var navigationArrows: some View {
+        let currentIndex = CircuitLibrary.all.firstIndex(where: { $0.id == selectedCircuitID }) ?? 0
+        
+        return HStack {
+            if currentIndex > 0 {
+                Button {
+                    Haptics.impact(.light)
+                    withAnimation {
+                        selectedCircuitID = CircuitLibrary.all[currentIndex - 1].id
+                    }
+                } label: {
+                    Image(systemName: "chevron.compact.left")
+                        .font(.system(size: 40, weight: .light))
+                        .foregroundStyle(.white.opacity(0.8))
+                        .padding()
+                }
+            }
+            
+            Spacer()
+            
+            if currentIndex < CircuitLibrary.all.count - 1 {
+                Button {
+                    Haptics.impact(.light)
+                    withAnimation {
+                        selectedCircuitID = CircuitLibrary.all[currentIndex + 1].id
+                    }
+                } label: {
+                    Image(systemName: "chevron.compact.right")
+                        .font(.system(size: 40, weight: .light))
+                        .foregroundStyle(.white.opacity(0.8))
+                        .padding()
+                }
+            }
+        }
+        .padding(.horizontal, 8)
+    }
+}
+
+/// Animated "swipe to explore" coach mark shown once on first launch.
+struct SwipeHintView: View {
+    @State private var handOffset: CGFloat = -26
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "hand.point.up.left.fill")
+                .font(.system(size: 26))
+                .foregroundStyle(.white)
+                .offset(x: handOffset)
+                .onAppear {
+                    withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) {
+                        handOffset = 26
+                    }
+                }
+            HStack(spacing: 10) {
+                Image(systemName: "chevron.left")
+                Text("SWIPE TO EXPLORE CIRCUITS")
+                    .font(.gilroy(11, .bold))
+                    .kerning(2)
+                Image(systemName: "chevron.right")
+            }
+            .font(.system(size: 12, weight: .bold))
+            .foregroundStyle(.white.opacity(0.9))
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
+        .background(.black.opacity(0.65), in: RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
+        )
     }
 }

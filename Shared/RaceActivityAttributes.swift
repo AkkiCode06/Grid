@@ -14,6 +14,7 @@ struct RaceActivityAttributes: ActivityAttributes {
 
     var circuitName: String
     var teamName: String
+    var teamColorHex: String
     var sessionNumber: Int
 }
 #endif

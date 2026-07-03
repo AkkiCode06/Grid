@@ -17,6 +17,7 @@ final class LiveActivityController {
         let attributes = RaceActivityAttributes(
             circuitName: pass.circuit.name,
             teamName: pass.team.name,
+            teamColorHex: pass.team.accentHex,
             sessionNumber: pass.sessionNumber
         )
         let endDate = startDate.addingTimeInterval(pass.durationSeconds)
@@ -55,7 +56,21 @@ final class LiveActivityController {
         var state = activity.content.state
         state.flagRaw = flagRaw
         let resolvedStale = staleDate ?? state.endDate
-        await activity.update(.init(state: state, staleDate: resolvedStale))
+        // A yellow flag fires an alert so the phone actively buzzes/banners
+        // the moment the user leaves — this is the "push" via ActivityKit.
+        if flagRaw == "yellow" {
+            let alert = AlertConfiguration(
+                title: "🟡 Yellow flag",
+                body: "Back to the race — you've left the paddock.",
+                sound: .default
+            )
+            await activity.update(
+                .init(state: state, staleDate: resolvedStale),
+                alertConfiguration: alert
+            )
+        } else {
+            await activity.update(.init(state: state, staleDate: resolvedStale))
+        }
     }
 
     func end() async {

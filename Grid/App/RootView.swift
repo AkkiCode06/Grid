@@ -3,6 +3,8 @@ import SwiftUI
 struct RootView: View {
     @Environment(SessionController.self) private var session
     @Environment(\.scenePhase) private var scenePhase
+    
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     var body: some View {
         ZStack {
@@ -10,8 +12,13 @@ struct RootView: View {
 
             switch session.phase {
             case .idle:
-                HomeView()
-                    .transition(.opacity)
+                if !hasCompletedOnboarding {
+                    OnboardingView()
+                        .transition(.opacity)
+                } else {
+                    HomeView()
+                        .transition(.opacity)
+                }
             case .passIssued(let pass):
                 PaddockPassView(pass: pass)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -27,6 +34,7 @@ struct RootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.35), value: session.phase)
+        .animation(.easeInOut(duration: 0.6), value: hasCompletedOnboarding)
         .preferredColorScheme(.dark)
         .onChange(of: scenePhase) { _, newPhase in
             session.handleScenePhase(newPhase)

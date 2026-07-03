@@ -8,6 +8,7 @@ struct SettingsView: View {
     @AppStorage("soundEnabled") private var soundEnabled = true
     @AppStorage("keepScreenAwake") private var keepScreenAwake = true
     @AppStorage("simulationMode") private var simulationMode = true
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = true
 
     @State private var showingActivityPicker = false
     @State private var showingPassStudio = false
@@ -66,6 +67,15 @@ struct SettingsView: View {
                         } else {
                             Text("Restore purchases")
                         }
+                    }
+                }
+
+                Section("Developer") {
+                    Button(role: .destructive) {
+                        hasCompletedOnboarding = false
+                        dismiss()
+                    } label: {
+                        Text("Reset Onboarding Flow")
                     }
                 }
             }

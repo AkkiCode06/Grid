@@ -99,12 +99,19 @@ private struct LockScreenRaceView: View {
                 .background(flag == .red ? Color.red : Color.yellow)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
             }
-            HStack {
-                Image(systemName: "flag.checkered")
-                    .foregroundStyle(flag == .red ? .red : flag == .yellow ? .yellow : .red)
-                Text(context.attributes.circuitName)
-                    .font(.subheadline.weight(.semibold))
-                    .lineLimit(1)
+            HStack(spacing: 8) {
+                Image(systemName: "car.side.fill")
+                    .font(.title3)
+                    .foregroundStyle(Color(hex: context.attributes.teamColorHex))
+                    .shadow(color: Color(hex: context.attributes.teamColorHex).opacity(0.6), radius: 3)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(context.attributes.circuitName)
+                        .font(.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                    Text(context.attributes.teamName.uppercased())
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
                 Spacer()
                 Text(String(format: "SESSION %03d", context.attributes.sessionNumber))
                     .font(.caption2.weight(.semibold))
@@ -131,3 +138,16 @@ private struct LockScreenRaceView: View {
     }
 }
 
+
+// Local hex initialiser — the widget target doesn't compile Theme.swift.
+extension Color {
+    init(hex: String) {
+        var value: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&value)
+        self.init(
+            red: Double((value >> 16) & 0xFF) / 255,
+            green: Double((value >> 8) & 0xFF) / 255,
+            blue: Double(value & 0xFF) / 255
+        )
+    }
+}

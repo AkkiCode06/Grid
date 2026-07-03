@@ -9,22 +9,31 @@ struct Team: Identifiable, Codable, Hashable {
     let accentHex: String   // livery primary → pass card colour
     let inkHex: String      // print colour on that livery
     let foilHex: String     // script flourish colour
+    let threeLetterCode: String
+    let carNumber: Int
+    let assetName: String
 }
 
 enum TeamLibrary {
     static let all: [Team] = [
         Team(id: "papaya", name: "Papaya Racing", tagline: "Fearlessly forward",
-             accentHex: "FF8700", inkHex: "17171A", foilHex: "E8E9EC"),
+             accentHex: "FF8700", inkHex: "17171A", foilHex: "E8E9EC",
+             threeLetterCode: "PAP", carNumber: 4, assetName: "team_papaya"),
         Team(id: "rosso", name: "Rosso Corse", tagline: "Avanti tutta",
-             accentHex: "E10A17", inkHex: "17171A", foilHex: "FFD34D"),
+             accentHex: "E10A17", inkHex: "17171A", foilHex: "FFD34D",
+             threeLetterCode: "ROS", carNumber: 16, assetName: "team_rosso"),
         Team(id: "argento", name: "Argento GP", tagline: "Precision in silver",
-             accentHex: "D8D8DC", inkHex: "10182B", foilHex: "0A7E8C"),
+             accentHex: "D8D8DC", inkHex: "10182B", foilHex: "0A7E8C",
+             threeLetterCode: "ARG", carNumber: 63, assetName: "team_argento"),
         Team(id: "midnight", name: "Midnight Blu", tagline: "Chase the night",
-             accentHex: "1B1E3C", inkHex: "F5F5F7", foilHex: "E10A17"),
+             accentHex: "1B1E3C", inkHex: "F5F5F7", foilHex: "E10A17",
+             threeLetterCode: "MID", carNumber: 23, assetName: "team_midnight"),
         Team(id: "verdant", name: "Verdant Racing", tagline: "Green light only",
-             accentHex: "1E5A46", inkHex: "F5F5F7", foilHex: "D9B45B"),
+             accentHex: "1E5A46", inkHex: "F5F5F7", foilHex: "D9B45B",
+             threeLetterCode: "VER", carNumber: 14, assetName: "team_verdant"),
         Team(id: "ivory", name: "Ivory Privateers", tagline: "Vintage speed",
-             accentHex: "F2EDE4", inkHex: "17171A", foilHex: "D9B45B"),
+             accentHex: "F2EDE4", inkHex: "17171A", foilHex: "D9B45B",
+             threeLetterCode: "IVO", carNumber: 77, assetName: "team_ivory"),
     ]
 
     static func team(id: String) -> Team? {

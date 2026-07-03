@@ -54,6 +54,9 @@ struct PassCardView: View {
     var stamped: Bool = false
     var result: RaceResult? = nil
     var shimmer: Bool = false
+    /// Gyro-reactive tilt + moving reflections (start MotionTilt.shared
+    /// on the presenting screen).
+    var motionShine: Bool = false
     /// Set for live previews (Pass Studio); defaults to the saved theme.
     var themeOverride: PassTheme? = nil
 
@@ -63,7 +66,22 @@ struct PassCardView: View {
 
     var body: some View {
         GeometryReader { geo in
-            card(width: geo.size.width)
+            if motionShine {
+                let tilt = MotionTilt.shared
+                card(width: geo.size.width)
+                    .rotation3DEffect(
+                        .degrees(tilt.roll * 14),
+                        axis: (x: 0, y: 1, z: 0),
+                        perspective: 0.55
+                    )
+                    .rotation3DEffect(
+                        .degrees(-tilt.pitch * 12),
+                        axis: (x: 1, y: 0, z: 0),
+                        perspective: 0.55
+                    )
+            } else {
+                card(width: geo.size.width)
+            }
         }
         .aspectRatio(0.72, contentMode: .fit)
     }
@@ -111,6 +129,7 @@ struct PassCardView: View {
         )
         .overlay(resultStamp(w))
         .overlay(hologramSweep)
+        .overlay(motionGlare)
         .clipShape(RoundedRectangle(cornerRadius: w * 0.055))
         .shadow(color: .black.opacity(0.45), radius: 16, y: 8)
         .onChange(of: shimmer) { _, active in
@@ -175,9 +194,42 @@ struct PassCardView: View {
                     .minimumScaleFactor(0.4)
                     .foregroundStyle(theme.foil)
                     .rotationEffect(.degrees(-7))
-                    .offset(x: w * 0.05, y: w * 0.115)
+                    .offset(x: w * 0.05, y: w * 0.10)
                     .shadow(color: .black.opacity(0.3), radius: 1.5, y: 1)
             }
+        }
+        // Breathing room so the script flourish never overlaps the
+        // details strip below.
+        .padding(.bottom, w * 0.085)
+    }
+
+    /// Moving specular highlight + faint iridescence driven by device tilt.
+    @ViewBuilder
+    private var motionGlare: some View {
+        if motionShine {
+            let tilt = MotionTilt.shared
+            GeometryReader { geo in
+                ZStack {
+                    LinearGradient(
+                        colors: [.clear, .white.opacity(0.3), .clear],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .frame(width: geo.size.width * 0.75)
+                    .rotationEffect(.degrees(18))
+                    .offset(
+                        x: tilt.roll * geo.size.width * 1.3,
+                        y: tilt.pitch * geo.size.height * 0.5
+                    )
+                    LinearGradient(
+                        colors: [.cyan.opacity(0.10), .clear, .pink.opacity(0.10)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .offset(x: -tilt.roll * geo.size.width * 0.7)
+                }
+            }
+            .allowsHitTesting(false)
         }
     }
 

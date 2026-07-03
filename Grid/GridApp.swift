@@ -24,6 +24,21 @@ struct GridApp: App {
                 .task {
                     session.attachModelContext(modelContainer.mainContext)
                     #if DEBUG
+                    // Screenshot/UI-test hook: land on the finish screen —
+                    // an already-elapsed snapshot finalises as FINISHED.
+                    if ProcessInfo.processInfo.arguments.contains("-uitest-finish"),
+                       let circuit = CircuitLibrary.all.first {
+                        SharedStore.saveActiveSession(ActiveSessionSnapshot(
+                            driverName: "TEST DRIVER",
+                            circuitID: circuit.id,
+                            circuitName: circuit.name,
+                            teamName: TeamLibrary.all[0].name,
+                            sessionNumber: 42,
+                            startDate: .now.addingTimeInterval(-1600),
+                            durationSeconds: 1500,
+                            lapSeconds: circuit.lapSeconds
+                        ))
+                    }
                     // Screenshot/UI-test hook: land mid-race via the restore path.
                     if ProcessInfo.processInfo.arguments.contains("-uitest-racing"),
                        let circuit = CircuitLibrary.all.first {

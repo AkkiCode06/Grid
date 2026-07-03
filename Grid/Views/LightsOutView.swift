@@ -50,18 +50,25 @@ struct LightsOutView: View {
     }
 
     private func runSequence() async {
+        // The bundled F1 lights recording carries the whole audio; the
+        // visuals and haptics are timed to it.
+        SoundPlayer.shared.play("lights_sequence")
         try? await Task.sleep(for: .seconds(0.8))
         for column in 1...5 {
             litColumns = column
             Haptics.impact(.rigid)
-            SoundPlayer.shared.play("light")
             try? await Task.sleep(for: .seconds(1))
         }
         // The random hold is what makes a real start unpredictable.
         try? await Task.sleep(for: .seconds(Double.random(in: 0.2...3.0)))
         lightsOut = true
+        // GO GO GO — alarm-style haptic burst, ramping hard.
+        for i in 0..<12 {
+            Haptics.impact(i % 3 == 2 ? .heavy : .rigid)
+            try? await Task.sleep(for: .milliseconds(i < 6 ? 90 : 60))
+        }
+        Haptics.success()
         Haptics.impact(.heavy)
-        SoundPlayer.shared.play("lightsout")
         try? await Task.sleep(for: .seconds(0.6))
         await session.lightsOut()
     }

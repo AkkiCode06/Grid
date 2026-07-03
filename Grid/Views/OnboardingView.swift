@@ -40,7 +40,7 @@ struct OnboardingView: View {
                     Haptics.impact(.heavy)
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                    withAnimation(.easeInOut(duration: 0.8)) {
+                    withAnimation(.easeInOut(duration: 1.1)) {
                         step = 1
                     }
                 }
@@ -114,7 +114,7 @@ struct OnboardingView: View {
             .padding(.horizontal, 32)
             .padding(.bottom, 64)
         }
-        .transition(.opacity.combined(with: .move(edge: .bottom)))
+        .transition(.opacity)
     }
 
     // MARK: - Team Step
@@ -153,7 +153,11 @@ struct OnboardingView: View {
                             Color(hex: selectedTeam.accentHex),
                             in: RoundedRectangle(cornerRadius: 16)
                         )
-                        .foregroundStyle(.white)
+                        .foregroundStyle(
+                            selectedTeam.id == "ivory"
+                                ? Color(hex: selectedTeam.foilHex)  // gold on ivory
+                                : .white
+                        )
                         .shadow(
                             color: Color(hex: selectedTeam.accentHex).opacity(0.4),
                             radius: 8, x: 0, y: 4

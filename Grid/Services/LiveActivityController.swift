@@ -26,7 +26,8 @@ final class LiveActivityController {
             totalLaps: pass.totalLaps,
             startDate: startDate,
             endDate: endDate,
-            flagRaw: nil
+            flagRaw: nil,
+            awayDeadline: nil
         )
         activity = try? Activity.request(
             attributes: attributes,
@@ -45,32 +46,33 @@ final class LiveActivityController {
         await activity.update(.init(state: state, staleDate: endDate))
     }
 
-    /// Waves (or clears) a flag on the Live Activity. Called as the app
-    /// backgrounds, so it must be quick.
-    ///
-    /// When setting a yellow flag, pass a staleDate of `now + redDelay` so the
-    /// widget can escalate to a red flag once the activity becomes stale (the
-    /// app is suspended and can't push a second update).
-    func setFlag(_ flagRaw: String?, staleDate: Date? = nil) async {
+    /// The user left the app: start the grace countdown. The widget counts
+    /// down to `deadline`, then renders the yellow flag once the activity goes
+    /// stale at that date (the app is suspended and can't push again). Fires an
+    /// alert so the phone buzzes the moment they leave.
+    func startAway(deadline: Date) async {
         guard let activity else { return }
         var state = activity.content.state
-        state.flagRaw = flagRaw
-        let resolvedStale = staleDate ?? state.endDate
-        // A yellow flag fires an alert so the phone actively buzzes/banners
-        // the moment the user leaves — this is the "push" via ActivityKit.
-        if flagRaw == "yellow" {
-            let alert = AlertConfiguration(
-                title: "🟡 Yellow flag",
-                body: "Back to the race — you've left the paddock.",
-                sound: .default
-            )
-            await activity.update(
-                .init(state: state, staleDate: resolvedStale),
-                alertConfiguration: alert
-            )
-        } else {
-            await activity.update(.init(state: state, staleDate: resolvedStale))
-        }
+        state.awayDeadline = deadline
+        state.flagRaw = "yellow"
+        let alert = AlertConfiguration(
+            title: "🟡 Race control",
+            body: "Get back to Grid before you're yellow flagged.",
+            sound: .default
+        )
+        await activity.update(
+            .init(state: state, staleDate: deadline),
+            alertConfiguration: alert
+        )
+    }
+
+    /// The user came back: clear the away state.
+    func clearAway() async {
+        guard let activity else { return }
+        var state = activity.content.state
+        state.awayDeadline = nil
+        state.flagRaw = nil
+        await activity.update(.init(state: state, staleDate: state.endDate))
     }
 
     func end() async {

@@ -117,43 +117,24 @@ final class SessionController {
         Haptics.impact(.rigid)
     }
 
-    /// Leaving the app mid-session waves flags: the Live Activity goes
-    /// yellow immediately, and pre-scheduled notifications escalate to red
-    /// if the user stays away. The Live Activity's stale date is set so
-    /// WidgetKit renders the red flag automatically after `redDelay`.
-    /// Everything clears when they return.
+    /// Leaving the app mid-session starts a grace countdown on the Live
+    /// Activity ("get back before you're yellow flagged"). If they stay away
+    /// past the deadline the widget flips to the yellow flag on its own (the
+    /// activity goes stale at that date). Returning clears everything.
     func handleScenePhase(_ scenePhase: ScenePhase) {
         guard case .racing = phase else { return }
         switch scenePhase {
         case .background:
             guard pitUntil == nil else { return } // pit stop = licensed to leave
             awaySince = .now
+            let deadline = Date.now.addingTimeInterval(AppConfig.flagGraceSeconds)
             Task(priority: .userInitiated) {
-                // Yellow flag now (with an alert so the phone buzzes); the
-                // stale date makes the widget escalate to red on its own once
-                // the user's been away too long — no local notifications.
-                await liveActivity.setFlag(
-                    "yellow",
-                    staleDate: Date.now.addingTimeInterval(NotificationService.redDelay)
-                )
+                await liveActivity.startAway(deadline: deadline)
             }
         case .active:
-            if let away = awaySince {
-                let elapsed = Date.now.timeIntervalSince(away)
+            if awaySince != nil {
                 awaySince = nil
-                if elapsed >= NotificationService.redDelay {
-                    // They were gone long enough to trigger a red flag — flash
-                    // it briefly so the user sees the escalation before clearing.
-                    Task {
-                        await liveActivity.setFlag("red")
-                        try? await Task.sleep(for: .milliseconds(600))
-                        await liveActivity.setFlag(nil)
-                    }
-                } else {
-                    Task {
-                        await liveActivity.setFlag(nil)
-                    }
-                }
+                Task { await liveActivity.clearAway() }
             }
             tick()
         default:

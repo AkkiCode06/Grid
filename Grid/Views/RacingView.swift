@@ -176,16 +176,7 @@ struct RacingView: View {
             }
         } else if showingPitPicker {
             HStack(spacing: 0) {
-                Button {
-                    Haptics.impact(.light)
-                    dismissPitPicker()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.gilroy(12, .bold))
-                        .frame(width: 38, height: 38)
-                }
-                Divider().frame(height: 20).background(Color.white.opacity(0.3))
-                ForEach([5, 10, 15], id: \.self) { mins in
+                ForEach([5, 10], id: \.self) { mins in
                     Button {
                         Haptics.impact(.medium)
                         dismissPitPicker()
@@ -194,13 +185,17 @@ struct RacingView: View {
                         Text("\(mins)M")
                             .font(.gilroy(12, .bold))
                             .kerning(1)
-                            .frame(width: 44, height: 38)
+                            .frame(width: 46, height: 38)
                     }
-                    if mins != 15 {
-                        Divider()
-                            .frame(height: 20)
-                            .background(Color.white.opacity(0.3))
-                    }
+                    Divider().frame(height: 20).background(Color.white.opacity(0.3))
+                }
+                Button {
+                    Haptics.impact(.light)
+                    dismissPitPicker()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.gilroy(12, .bold))
+                        .frame(width: 40, height: 38)
                 }
             }
             .background(.black.opacity(0.35), in: RoundedRectangle(cornerRadius: 10))

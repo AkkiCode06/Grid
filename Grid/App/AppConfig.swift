@@ -4,6 +4,9 @@ enum AppConfig {
     /// Product ID for the one-time full unlock. Configurable before launch.
     static let fullUnlockProductID = "com.akki.grid.unlock.full"
 
+    /// Grace period after leaving the app before the yellow flag drops.
+    static let flagGraceSeconds: TimeInterval = 20
+
     /// While the FamilyControls distribution entitlement is pending, the whole
     /// session flow runs without applying a real shield. The live value is the
     /// "simulationMode" UserDefaults key (toggleable in Settings); this is

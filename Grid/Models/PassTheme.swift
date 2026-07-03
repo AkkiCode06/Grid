@@ -29,17 +29,106 @@ enum PassDateStyle: String, Codable, CaseIterable {
     }
 }
 
+/// An individually-selectable region of the pass in Pass Studio.
+enum PassPart: String, CaseIterable, Identifiable {
+    case card          // card colour + texture
+    case bigPrint      // role text ("VIP")
+    case script        // flourish ("Guest")
+    case year
+    case detailsStrip  // ink colour of the info strip
+    case track         // track outline colour
+    case event         // event line text
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .card: return "Card"
+        case .bigPrint: return "Big Print"
+        case .script: return "Flourish"
+        case .year: return "Year"
+        case .detailsStrip: return "Info Strip"
+        case .track: return "Track"
+        case .event: return "Event Line"
+        }
+    }
+
+    var editsText: Bool {
+        switch self {
+        case .bigPrint, .script, .year, .event: return true
+        case .card, .detailsStrip, .track: return false
+        }
+    }
+
+    var editsFontAndSize: Bool {
+        self == .bigPrint || self == .script
+    }
+}
+
+/// Card surface finish.
+enum PassTexture: String, Codable, CaseIterable {
+    case matte
+    case gloss
+    case carbon
+    case holographic   // pro-only, radiant sheen
+
+    var label: String {
+        switch self {
+        case .matte: return "Matte"
+        case .gloss: return "Gloss"
+        case .carbon: return "Carbon"
+        case .holographic: return "Holo"
+        }
+    }
+}
+
+/// A named Gilroy weight the user can assign to a text element.
+enum PassFont: String, Codable, CaseIterable {
+    case heavy, black, extraBold, bold, semiBold, medium, light, script
+
+    var label: String {
+        switch self {
+        case .script: return "Script"
+        default: return rawValue.capitalized
+        }
+    }
+
+    /// Returns a SwiftUI font at the given size. `.script` maps to Snell.
+    func font(_ size: CGFloat) -> Font {
+        switch self {
+        case .heavy: return .gilroy(size, .heavy)
+        case .black: return .gilroy(size, .black)
+        case .extraBold: return .gilroy(size, .extraBold)
+        case .bold: return .gilroy(size, .bold)
+        case .semiBold: return .gilroy(size, .semiBold)
+        case .medium: return .gilroy(size, .medium)
+        case .light: return .gilroy(size, .light)
+        case .script: return .custom("SnellRoundhand-Bold", size: size)
+        }
+    }
+}
+
 /// Everything the user can customise about their paddock pass. The pass
 /// stays on-theme (lanyard card, stripe bands, block print) but wording,
-/// colours, and which details are printed are all theirs.
+/// colours, fonts, sizes, and texture are all theirs.
 struct PassTheme: Codable, Equatable {
     var accentHex: String = "FF8700"   // card colour (papaya default)
-    var inkHex: String = "17171A"      // print colour
+    var inkHex: String = "17171A"      // print / details colour
     var foilHex: String = "E8E9EC"     // script flourish colour
+    var trackHex: String = "17171A"    // track outline colour
     var roleText: String = "VIP"
     var scriptText: String = "Guest"
     var yearText: String = PassTheme.currentYear
     var eventText: String = "GRID FOCUS CHAMPIONSHIP"
+
+    // Per-element typography (multipliers on the card's base sizing).
+    var roleFont: PassFont = .black
+    var roleScale: Double = 1.0
+    var scriptFont: PassFont = .script
+    var scriptScale: Double = 1.0
+
+    var texture: PassTexture = .matte
+
     var dateStyle: PassDateStyle = .dateAndTime
     var showBarcode: Bool = true
     var showTrackOutline: Bool = true
@@ -50,6 +139,7 @@ struct PassTheme: Codable, Equatable {
     var accent: Color { Color(hex: accentHex) }
     var ink: Color { Color(hex: inkHex) }
     var foil: Color { Color(hex: foilHex) }
+    var track: Color { Color(hex: trackHex) }
 }
 
 @Observable

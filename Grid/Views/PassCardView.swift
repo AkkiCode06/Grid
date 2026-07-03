@@ -59,8 +59,13 @@ struct PassCardView: View {
     var motionShine: Bool = false
     /// Set for live previews (Pass Studio); defaults to the saved theme.
     var themeOverride: PassTheme? = nil
+    /// Pass Studio edit mode: parts wiggle and become tappable.
+    var editing: Bool = false
+    var selectedPart: PassPart? = nil
+    var onSelectPart: ((PassPart) -> Void)? = nil
 
     @State private var shimmerPhase: CGFloat = -0.6
+    @State private var wigglePhase: Double = 0
 
     private var theme: PassTheme { themeOverride ?? PassThemeStore.shared.theme }
 
@@ -122,6 +127,7 @@ struct PassCardView: View {
                 .frame(height: w * 0.05)
         }
         .background(theme.accent)
+        .overlay(textureOverlay(w))
         .clipShape(RoundedRectangle(cornerRadius: w * 0.055))
         .overlay(
             RoundedRectangle(cornerRadius: w * 0.055)
@@ -131,6 +137,7 @@ struct PassCardView: View {
         .overlay(hologramSweep)
         .overlay(motionGlare)
         .clipShape(RoundedRectangle(cornerRadius: w * 0.055))
+        .modifier(editableModifier(.card, radius: w * 0.055))
         .shadow(color: .black.opacity(0.45), radius: 16, y: 8)
         .onChange(of: shimmer) { _, active in
             guard active else { return }
@@ -139,6 +146,61 @@ struct PassCardView: View {
                 shimmerPhase = 1.6
             }
         }
+        .onAppear {
+            if editing {
+                withAnimation(.easeInOut(duration: 0.16).repeatForever(autoreverses: true)) {
+                    wigglePhase = 1
+                }
+            }
+        }
+    }
+
+    /// Surface finish overlays for gloss / carbon / holographic.
+    @ViewBuilder
+    private func textureOverlay(_ w: CGFloat) -> some View {
+        switch theme.texture {
+        case .matte:
+            EmptyView()
+        case .gloss:
+            LinearGradient(
+                colors: [.white.opacity(0.28), .clear, .black.opacity(0.12)],
+                startPoint: .top, endPoint: .bottom
+            )
+            .allowsHitTesting(false)
+        case .carbon:
+            GeometryReader { geo in
+                Canvas { ctx, size in
+                    let step: CGFloat = 4
+                    var y: CGFloat = 0
+                    while y < size.height {
+                        var x: CGFloat = (Int(y / step) % 2 == 0) ? 0 : step / 2
+                        while x < size.width {
+                            ctx.fill(
+                                Path(CGRect(x: x, y: y, width: step * 0.5, height: step * 0.5)),
+                                with: .color(.white.opacity(0.05))
+                            )
+                            x += step
+                        }
+                        y += step
+                    }
+                }
+            }
+            .allowsHitTesting(false)
+        case .holographic:
+            HolographicSheen()
+                .allowsHitTesting(false)
+        }
+    }
+
+    /// Configures the wiggle + selectable affordance for a part.
+    func editableModifier(_ part: PassPart, radius: CGFloat = 6) -> EditablePartModifier {
+        EditablePartModifier(
+            active: editing,
+            selected: selectedPart == part,
+            wiggle: wigglePhase,
+            cornerRadius: radius,
+            onTap: { onSelectPart?(part) }
+        )
     }
 
     // MARK: - Pieces
@@ -174,28 +236,31 @@ struct PassCardView: View {
             }
         }
         .foregroundStyle(theme.ink)
+        .modifier(editableModifier(.year))
     }
 
     private func roleBlock(_ w: CGFloat) -> some View {
         ZStack {
             Text(theme.roleText.uppercased())
-                .font(.gilroy(w * 0.34, .black))
+                .font(theme.roleFont.font(w * 0.34 * theme.roleScale))
                 .fontWidth(.condensed)
                 .kerning(-w * 0.008)
                 .lineLimit(1)
                 .minimumScaleFactor(0.25)
                 .foregroundStyle(theme.ink)
                 .padding(.horizontal, w * 0.05)
+                .modifier(editableModifier(.bigPrint))
 
             if !theme.scriptText.isEmpty {
                 Text(theme.scriptText)
-                    .font(.custom("SnellRoundhand-Bold", size: w * 0.17))
+                    .font(theme.scriptFont.font(w * 0.17 * theme.scriptScale))
                     .lineLimit(1)
                     .minimumScaleFactor(0.4)
                     .foregroundStyle(theme.foil)
                     .rotationEffect(.degrees(-7))
                     .offset(x: w * 0.05, y: w * 0.10)
                     .shadow(color: .black.opacity(0.3), radius: 1.5, y: 1)
+                    .modifier(editableModifier(.script))
             }
         }
         // Breathing room so the script flourish never overlaps the
@@ -267,6 +332,7 @@ struct PassCardView: View {
         .padding(.vertical, w * 0.035)
         .frame(maxWidth: .infinity)
         .background(theme.ink)
+        .modifier(editableModifier(.detailsStrip))
     }
 
     private func driverArea(_ w: CGFloat) -> some View {
@@ -308,14 +374,16 @@ struct PassCardView: View {
         HStack(spacing: w * 0.04) {
             if theme.showTrackOutline {
                 TrackOutlineShape(circuitID: model.circuitID)
-                    .stroke(theme.ink, lineWidth: w * 0.008)
+                    .stroke(theme.track, lineWidth: w * 0.008)
                     .frame(width: w * 0.16, height: w * 0.12)
+                    .modifier(editableModifier(.track))
             }
             Text(theme.eventText.uppercased())
                 .font(.gilroy(w * 0.03, .bold))
                 .kerning(1.5)
                 .lineLimit(2)
                 .foregroundStyle(theme.ink.opacity(0.75))
+                .modifier(editableModifier(.event))
             Spacer()
         }
     }
@@ -420,5 +488,56 @@ struct BarcodeStripView: View {
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 5))
+    }
+}
+
+/// Wraps an editable region of the pass: in edit mode it wiggles subtly and
+/// becomes tappable, with a dashed selection ring when active.
+struct EditablePartModifier: ViewModifier {
+    let active: Bool
+    let selected: Bool
+    let wiggle: Double
+    var cornerRadius: CGFloat = 6
+    let onTap: () -> Void
+
+    func body(content: Content) -> some View {
+        if active {
+            content
+                .rotationEffect(.degrees(selected ? 0 : (wiggle - 0.5) * 1.4))
+                .overlay(
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .strokeBorder(
+                            style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])
+                        )
+                        .foregroundStyle(selected ? Color.white : Color.white.opacity(0.4))
+                        .padding(-3)
+                )
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    Haptics.impact(.light)
+                    onTap()
+                }
+        } else {
+            content
+        }
+    }
+}
+
+/// Radiant holographic sheen — the pro texture. Slow drifting rainbow bands.
+struct HolographicSheen: View {
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 24)) { context in
+            let t = context.date.timeIntervalSinceReferenceDate
+            let shift = CGFloat(sin(t * 0.6)) * 0.5
+            LinearGradient(
+                colors: [
+                    .pink.opacity(0.28), .purple.opacity(0.22), .cyan.opacity(0.26),
+                    .green.opacity(0.20), .yellow.opacity(0.24), .pink.opacity(0.28),
+                ],
+                startPoint: UnitPoint(x: 0.0 + shift, y: 0.0),
+                endPoint: UnitPoint(x: 1.0 + shift, y: 1.0)
+            )
+            .blendMode(.overlay)
+        }
     }
 }

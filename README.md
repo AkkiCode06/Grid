@@ -70,7 +70,8 @@ under the names declared on each seat, no view changes required.
 
 ## Roadmap
 
-- [ ] Real backdrop + flyby asset library (per circuit × seat)
+- [ ] Real paddock backdrop stills (6, one per circuit) — flybys are 3D now
+- [ ] Proper open-wheel .usdz car model to replace the procedural one
 - [ ] Sound design: doppler whooshes, light gantry beeps, stamp thunk
 - [ ] Mandatory pit-stop breaks (pomodoro mode)
 - [ ] On-Demand Resources for the paid circuit assets

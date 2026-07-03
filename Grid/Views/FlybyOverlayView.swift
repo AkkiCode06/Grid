@@ -1,17 +1,26 @@
 import SwiftUI
 import AVFoundation
 
-/// Fires a car flyby at random 20–60s intervals. Plays a bundled clip for
-/// the circuit when available; until real clips land, falls back to a
-/// motion-streak placeholder so the effect (and its timing) is testable now.
+/// Fires a car flyby at random 20–60s intervals. A bundled video clip for
+/// the circuit wins if one exists; otherwise the 3D team-liveried car
+/// crosses the screen — so the app needs zero video assets to feel alive.
 struct FlybyOverlayView: View {
     let circuit: Circuit
+    let team: Team
 
     @State private var activeClipURL: URL?
-    @State private var streakTrigger = 0
+    @State private var carTrigger = 0
 
     private var clipURLs: [URL] {
         AssetResolver.flybyClipURLs(for: circuit)
+    }
+
+    private var isUITest: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-uitest-flyby")
+        #else
+        return false
+        #endif
     }
 
     var body: some View {
@@ -22,17 +31,17 @@ struct FlybyOverlayView: View {
                 }
                 .transition(.opacity)
             }
-            FlybyStreakView(trigger: streakTrigger)
+            CarFlybySceneView(trigger: carTrigger, team: team)
         }
         .task {
             // First flyby comes quickly so the screen feels alive, then
             // settles into the random 20–60s cadence.
-            var delay = Double.random(in: 8...18)
+            var delay = isUITest ? 2.0 : Double.random(in: 8...18)
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(delay))
                 guard !Task.isCancelled else { break }
                 fireFlyby()
-                delay = Double.random(in: 20...60)
+                delay = isUITest ? 5.0 : Double.random(in: 20...60)
             }
         }
     }
@@ -44,42 +53,9 @@ struct FlybyOverlayView: View {
                 activeClipURL = url
             }
         } else {
-            streakTrigger += 1
+            carTrigger += 1
         }
         Haptics.impact(.soft)
-    }
-}
-
-/// Placeholder flyby: a bright streak crossing the lower third of the screen.
-struct FlybyStreakView: View {
-    let trigger: Int
-
-    @State private var phase: CGFloat = -0.5
-
-    var body: some View {
-        GeometryReader { geo in
-            Capsule()
-                .fill(
-                    LinearGradient(
-                        colors: [.clear, .white.opacity(0.9), Theme.raceRed.opacity(0.7), .clear],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .frame(width: geo.size.width * 0.5, height: 7)
-                .blur(radius: 2)
-                .position(
-                    x: phase * geo.size.width,
-                    y: geo.size.height * 0.68
-                )
-                .opacity(phase > -0.4 && phase < 1.6 ? 1 : 0)
-        }
-        .onChange(of: trigger) { _, _ in
-            phase = -0.5
-            withAnimation(.easeIn(duration: 0.7)) {
-                phase = 1.7
-            }
-        }
     }
 }
 

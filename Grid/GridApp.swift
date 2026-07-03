@@ -22,6 +22,22 @@ struct GridApp: App {
                 .environment(session)
                 .task {
                     session.attachModelContext(modelContainer.mainContext)
+                    #if DEBUG
+                    // Screenshot/UI-test hook: land mid-race via the restore path.
+                    if ProcessInfo.processInfo.arguments.contains("-uitest-racing"),
+                       let circuit = CircuitLibrary.all.first {
+                        SharedStore.saveActiveSession(ActiveSessionSnapshot(
+                            driverName: "TEST DRIVER",
+                            circuitID: circuit.id,
+                            circuitName: circuit.name,
+                            teamName: TeamLibrary.all[0].name,
+                            sessionNumber: 99,
+                            startDate: .now.addingTimeInterval(-300),
+                            durationSeconds: 1500,
+                            lapSeconds: circuit.lapSeconds
+                        ))
+                    }
+                    #endif
                     session.restoreOnLaunch()
                     #if DEBUG
                     // Screenshot/UI-test hook: jump straight to an issued pass.

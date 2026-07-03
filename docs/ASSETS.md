@@ -6,11 +6,12 @@ asset exists, views fall back to gradient backdrops and a streak-flyby
 placeholder.
 
 **Concept:** the user is a team member standing in the paddock / on the pit
-wall. One backdrop per circuit (shared by all teams), and flyby clips show
-mixed generic cars passing — teams are an identity/livery layer in the UI,
-not separate footage.
+wall. One backdrop per circuit (shared by all teams). **Flybys are rendered
+in 3D** (SceneKit car tinted in the team's livery) — video clips are now an
+*optional* override: if a clip with the right name is bundled it plays
+instead of the 3D car, otherwise the 3D car handles it.
 
-## Totals: 6 backdrops + 30 clips
+## Required: 6 backdrops. Optional: up to 30 clips.
 
 ## Specs
 

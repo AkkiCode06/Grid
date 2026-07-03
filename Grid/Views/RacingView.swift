@@ -19,7 +19,7 @@ struct RacingView: View {
             backdrop
                 .ignoresSafeArea()
 
-            FlybyOverlayView(circuit: pass.circuit)
+            FlybyOverlayView(circuit: pass.circuit, team: pass.team)
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 

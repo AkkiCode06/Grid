@@ -18,7 +18,9 @@ gets stamped **DNF** for everyone (you) to see in your Race Log.
    seat decides which backdrop and car flybys you get during the session.
 2. **Stamp your pass.** A personalised paddock pass — name, circuit, seat,
    session number, barcode — is issued for every session. Press and hold to
-   imprint it: that stamp *is* the commitment.
+   imprint it: that stamp *is* the commitment. The pass itself is fully
+   customisable in **Pass Studio** (card/print/flourish colours, wording,
+   year, printed details).
 3. **Lights out.** Five red lights, one per second, a random hold… and away
    you go. The shield activates the moment the lights go out.
 4. **Stay locked in.** Your chosen apps are blocked via the Screen Time API
@@ -72,6 +74,12 @@ under the names declared on each seat, no view changes required.
 - [ ] Sound design: doppler whooshes, light gantry beeps, stamp thunk
 - [ ] Mandatory pit-stop breaks (pomodoro mode)
 - [ ] On-Demand Resources for the paid circuit assets
+
+## Credits
+
+Circuit outlines are derived from the
+[f1-circuits](https://github.com/bacinger/f1-circuits) GeoJSON dataset
+(MIT © Tomislav Bacinger), simplified and normalised at build time.
 
 ## A note on trademarks
 

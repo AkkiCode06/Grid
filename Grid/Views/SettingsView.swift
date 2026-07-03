@@ -10,6 +10,7 @@ struct SettingsView: View {
     @AppStorage("simulationMode") private var simulationMode = true
 
     @State private var showingActivityPicker = false
+    @State private var showingPassStudio = false
     @State private var activitySelection = BlockingService.shared.selection
     @State private var restoring = false
 
@@ -19,6 +20,11 @@ struct SettingsView: View {
                 Section("Driver") {
                     TextField("Name on your pass", text: $driverName)
                         .autocorrectionDisabled()
+                    Button {
+                        showingPassStudio = true
+                    } label: {
+                        Label("Pass Studio", systemImage: "paintbrush.fill")
+                    }
                 }
 
                 Section {
@@ -72,6 +78,7 @@ struct SettingsView: View {
                     Button("Done") { dismiss() }
                 }
             }
+            .sheet(isPresented: $showingPassStudio) { PassStudioView() }
             .familyActivityPicker(
                 isPresented: $showingActivityPicker,
                 selection: $activitySelection

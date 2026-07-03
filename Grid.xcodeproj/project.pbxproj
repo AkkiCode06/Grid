@@ -53,7 +53,6 @@
 		A3E00000000000000000CE01 /* Exceptions for "GridMonitor" folder in "GridMonitor" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				GridMonitor.entitlements,
 				Info.plist,
 			);
 			target = A5000000000000000000CE01 /* GridMonitor */;
@@ -61,26 +60,15 @@
 		A3E00000000000000000CE02 /* Exceptions for "GridWidgets" folder in "GridWidgets" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				GridWidgets.entitlements,
 				Info.plist,
 			);
 			target = A5000000000000000000CE02 /* GridWidgets */;
-		};
-		A3E00000000000000000CE03 /* Exceptions for "Grid" folder in "Grid" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Grid.entitlements,
-			);
-			target = 6D88E0E52FF798FB00A2CE30 /* Grid */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		6D88E0E82FF798FB00A2CE30 /* Grid */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				A3E00000000000000000CE03 /* Exceptions for "Grid" folder in "Grid" target */,
-			);
 			path = Grid;
 			sourceTree = "<group>";
 		};

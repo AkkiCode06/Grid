@@ -23,6 +23,13 @@ struct GridApp: App {
                 .task {
                     session.attachModelContext(modelContainer.mainContext)
                     session.restoreOnLaunch()
+                    #if DEBUG
+                    // Screenshot/UI-test hook: jump straight to an issued pass.
+                    if ProcessInfo.processInfo.arguments.contains("-uitest-pass"),
+                       let circuit = CircuitLibrary.all.first {
+                        session.issuePass(circuit: circuit, seat: circuit.seats[0])
+                    }
+                    #endif
                     await StoreService.shared.start()
                 }
         }

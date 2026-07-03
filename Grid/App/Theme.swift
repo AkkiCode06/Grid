@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 enum Theme {
     static let background = Color(red: 0.05, green: 0.05, blue: 0.07)
@@ -26,6 +27,18 @@ extension Color {
             red: Double((value >> 16) & 0xFF) / 255,
             green: Double((value >> 8) & 0xFF) / 255,
             blue: Double(value & 0xFF) / 255
+        )
+    }
+
+    func hexString() -> String {
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+        UIColor(self).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        return String(
+            format: "%02X%02X%02X",
+            Int(round(red * 255)), Int(round(green * 255)), Int(round(blue * 255))
         )
     }
 }

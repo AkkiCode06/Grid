@@ -12,6 +12,7 @@ struct HomeView: View {
     @State private var showingRaceLog = false
     @State private var showingSettings = false
     @State private var showingPaywall = false
+    @State private var showingPassStudio = false
 
     private var store: StoreService { StoreService.shared }
 
@@ -59,6 +60,7 @@ struct HomeView: View {
             .sheet(isPresented: $showingRaceLog) { RaceLogView() }
             .sheet(isPresented: $showingSettings) { SettingsView() }
             .sheet(isPresented: $showingPaywall) { PaywallView() }
+            .sheet(isPresented: $showingPassStudio) { PassStudioView() }
             .onAppear { customMinutes = session.customDurationMinutes }
             .onChange(of: customMinutes) { _, newValue in
                 session.customDurationMinutes = newValue
@@ -79,6 +81,14 @@ struct HomeView: View {
                     .kerning(2)
             }
             Spacer()
+            Button {
+                showingPassStudio = true
+            } label: {
+                Image(systemName: "paintbrush.fill")
+                    .font(.title3)
+                    .foregroundStyle(Theme.textPrimary)
+            }
+            .padding(.trailing, 12)
             Button {
                 showingRaceLog = true
             } label: {

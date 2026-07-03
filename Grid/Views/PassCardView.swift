@@ -44,36 +44,75 @@ struct PassCardModel {
     var sessionLabel: String { String(format: "SESSION %03d", sessionNumber) }
 }
 
-/// Lanyard-style paddock pass. `stamped` embosses the driver name and
-/// timestamp; `result` adds the FINISHED / DNF stamp; `shimmer` runs the
-/// hologram sweep once when it flips to true.
+/// Lanyard-style paddock pass, modelled on real race-weekend VIP passes:
+/// coloured card, hazard stripe bands, giant block role print with a script
+/// flourish, vertical year. Colours and wording come from the user's
+/// PassTheme. `stamped` embosses the driver name; `result` adds the
+/// FINISHED / DNF stamp; `shimmer` runs the hologram sweep once.
 struct PassCardView: View {
     let model: PassCardModel
     var stamped: Bool = false
     var result: RaceResult? = nil
     var shimmer: Bool = false
+    /// Set for live previews (Pass Studio); defaults to the saved theme.
+    var themeOverride: PassTheme? = nil
 
     @State private var shimmerPhase: CGFloat = -0.6
 
+    private var theme: PassTheme { themeOverride ?? PassThemeStore.shared.theme }
+
     var body: some View {
-        VStack(spacing: 0) {
-            lanyardHole
-            headerBand
-            details
-            stampArea
-            BarcodeStripView(seed: model.sessionNumber &* 31 &+ model.driverName.hashValue)
-                .frame(height: 44)
-                .padding(.horizontal, 18)
-                .padding(.bottom, 18)
+        GeometryReader { geo in
+            card(width: geo.size.width)
         }
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 20))
+        .aspectRatio(0.72, contentMode: .fit)
+    }
+
+    private func card(width w: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            StripeBand(color: theme.ink)
+                .frame(height: w * 0.05)
+
+            header(w)
+                .padding(.horizontal, w * 0.06)
+                .padding(.top, w * 0.05)
+
+            Spacer(minLength: 0)
+
+            roleBlock(w)
+
+            Spacer(minLength: 0)
+
+            detailsStrip(w)
+
+            driverArea(w)
+                .padding(.horizontal, w * 0.06)
+                .padding(.vertical, w * 0.035)
+
+            bottomRow(w)
+                .padding(.horizontal, w * 0.06)
+                .padding(.bottom, w * 0.04)
+
+            if theme.showBarcode {
+                BarcodeStripView(seed: model.sessionNumber &* 31 &+ model.driverName.hashValue)
+                    .frame(height: w * 0.11)
+                    .padding(.horizontal, w * 0.06)
+                    .padding(.bottom, w * 0.05)
+            }
+
+            StripeBand(color: theme.ink)
+                .frame(height: w * 0.05)
+        }
+        .background(theme.accent)
+        .clipShape(RoundedRectangle(cornerRadius: w * 0.055))
         .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
+            RoundedRectangle(cornerRadius: w * 0.055)
+                .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
         )
-        .overlay(resultStamp)
+        .overlay(resultStamp(w))
         .overlay(hologramSweep)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .clipShape(RoundedRectangle(cornerRadius: w * 0.055))
+        .shadow(color: .black.opacity(0.45), radius: 16, y: 8)
         .onChange(of: shimmer) { _, active in
             guard active else { return }
             shimmerPhase = -0.6
@@ -83,138 +122,177 @@ struct PassCardView: View {
         }
     }
 
-    private var lanyardHole: some View {
-        Capsule()
-            .fill(Theme.background)
-            .frame(width: 56, height: 9)
-            .padding(.top, 12)
-            .padding(.bottom, 4)
-    }
+    // MARK: - Pieces
 
-    private var headerBand: some View {
-        HStack {
-            Text("PADDOCK PASS")
-                .font(.telemetry(12, weight: .bold))
-                .kerning(3)
+    private func header(_ w: CGFloat) -> some View {
+        HStack(alignment: .top) {
+            Text("GRID")
+                .font(.system(size: w * 0.08, weight: .black))
+                .italic()
+                .foregroundStyle(theme.accent)
+                .padding(.horizontal, w * 0.045)
+                .padding(.vertical, w * 0.018)
+                .background(theme.ink)
+                .clipShape(SlantedRect(skew: 0.22))
+
             Spacer()
-            Text(model.sessionLabel)
-                .font(.telemetry(12, weight: .bold))
+
+            verticalYear(w)
         }
-        .foregroundStyle(.white)
-        .padding(.horizontal, 18)
-        .padding(.vertical, 10)
-        .background(Theme.raceRed)
-        .padding(.top, 6)
     }
 
-    private var details: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(model.circuitName)
-                        .font(.system(size: 19, weight: .heavy))
-                        .foregroundStyle(Theme.textPrimary)
-                    Text(model.country.uppercased())
-                        .font(.telemetry(10))
-                        .kerning(2)
-                        .foregroundStyle(Theme.textSecondary)
-                }
-                Spacer()
-                Text(model.flag)
-                    .font(.title)
-            }
-
-            HStack(spacing: 0) {
-                passField("GRANDSTAND", model.seatName.uppercased())
-                passField("DATE", model.date.formatted(date: .abbreviated, time: .omitted))
-                passField("TIME", model.date.formatted(date: .omitted, time: .shortened))
-            }
-            HStack(spacing: 0) {
-                passField("DURATION", "\(Int(model.durationSeconds / 60)) MIN")
-                passField("LAPS", "\(model.totalLaps)")
-                passField("ACCESS", "ALL AREAS")
+    /// Year printed as stacked pairs of digits ("2026" → "20" over "26").
+    private func verticalYear(_ w: CGFloat) -> some View {
+        let digits = Array(theme.yearText)
+        let rows: [String] = stride(from: 0, to: digits.count, by: 2).map {
+            String(digits[$0..<min($0 + 2, digits.count)])
+        }
+        return VStack(alignment: .trailing, spacing: -w * 0.012) {
+            ForEach(rows, id: \.self) { row in
+                Text(row)
+                    .font(.system(size: w * 0.085, weight: .black))
+                    .fontWidth(.condensed)
             }
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 14)
-        .background(
-            TrackOutlineShape(circuitID: model.circuitID)
-                .stroke(Color.white.opacity(0.05), lineWidth: 2)
-                .padding(24)
-        )
+        .foregroundStyle(theme.ink)
     }
 
-    private func passField(_ label: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(label)
-                .font(.telemetry(8))
-                .kerning(1.5)
-                .foregroundStyle(Theme.textTertiary)
-            Text(value)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(Theme.textPrimary)
+    private func roleBlock(_ w: CGFloat) -> some View {
+        ZStack {
+            Text(theme.roleText.uppercased())
+                .font(.system(size: w * 0.34, weight: .black))
+                .fontWidth(.condensed)
+                .kerning(-w * 0.008)
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .minimumScaleFactor(0.25)
+                .foregroundStyle(theme.ink)
+                .padding(.horizontal, w * 0.05)
+
+            if !theme.scriptText.isEmpty {
+                Text(theme.scriptText)
+                    .font(.custom("SnellRoundhand-Bold", size: w * 0.17))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.4)
+                    .foregroundStyle(theme.foil)
+                    .rotationEffect(.degrees(-7))
+                    .offset(x: w * 0.05, y: w * 0.115)
+                    .shadow(color: .black.opacity(0.3), radius: 1.5, y: 1)
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// Driver name area: dotted placeholder until the pass is stamped, then
-    /// the name + timestamp emboss in.
-    private var stampArea: some View {
-        VStack(alignment: .leading, spacing: 2) {
+    private func detailsStrip(_ w: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: w * 0.012) {
+            HStack(spacing: w * 0.02) {
+                Text(model.flag)
+                    .font(.system(size: w * 0.05))
+                Text(model.circuitName.uppercased())
+                    .font(.system(size: w * 0.042, weight: .heavy))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                Spacer()
+                if theme.showSessionNumber {
+                    Text(model.sessionLabel)
+                        .font(.system(size: w * 0.038, weight: .bold, design: .monospaced))
+                }
+            }
+            HStack(spacing: w * 0.015) {
+                Text(model.seatName.uppercased())
+                if let dateText = theme.dateStyle.text(for: model.date) {
+                    Text("•")
+                    Text(dateText.uppercased())
+                }
+                Text("•")
+                Text("\(Int(model.durationSeconds / 60)) MIN / \(model.totalLaps) LAPS")
+                Spacer()
+            }
+            .font(.system(size: w * 0.033, weight: .semibold, design: .monospaced))
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+        }
+        .foregroundStyle(theme.accent)
+        .padding(.horizontal, w * 0.06)
+        .padding(.vertical, w * 0.035)
+        .frame(maxWidth: .infinity)
+        .background(theme.ink)
+    }
+
+    private func driverArea(_ w: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: w * 0.008) {
             Text("DRIVER")
-                .font(.telemetry(8))
-                .kerning(1.5)
-                .foregroundStyle(Theme.textTertiary)
+                .font(.system(size: w * 0.028, weight: .bold, design: .monospaced))
+                .kerning(2)
+                .foregroundStyle(theme.ink.opacity(0.55))
             if stamped {
                 Text(model.driverName.uppercased())
-                    .font(.system(size: 24, weight: .black))
-                    .foregroundStyle(Theme.textPrimary)
-                    .shadow(color: .black.opacity(0.8), radius: 0, x: 0, y: 1.5)
-                    .shadow(color: .white.opacity(0.15), radius: 0, x: 0, y: -1)
+                    .font(.system(size: w * 0.085, weight: .black))
+                    .fontWidth(.condensed)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .foregroundStyle(theme.ink)
+                    .shadow(color: .black.opacity(0.35), radius: 0, y: 1)
+                    .shadow(color: .white.opacity(0.25), radius: 0, y: -1)
                     .transition(.scale(scale: 1.7).combined(with: .opacity))
-                Text("STAMPED \(model.date.formatted(date: .numeric, time: .standard))")
-                    .font(.telemetry(9))
-                    .foregroundStyle(Theme.textSecondary)
-                    .transition(.opacity)
+                if let dateText = PassDateStyle.dateAndTime.text(for: model.date) {
+                    Text("STAMPED \(dateText.uppercased())")
+                        .font(.system(size: w * 0.026, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(theme.ink.opacity(0.6))
+                        .transition(.opacity)
+                }
             } else {
                 Text("— HOLD TO STAMP —")
-                    .font(.system(size: 24, weight: .black))
-                    .foregroundStyle(Theme.textTertiary.opacity(0.5))
+                    .font(.system(size: w * 0.085, weight: .black))
+                    .fontWidth(.condensed)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .foregroundStyle(theme.ink.opacity(0.25))
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
-        .padding(.horizontal, 18)
-        .padding(.bottom, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .animation(.spring(duration: 0.35, bounce: 0.4), value: stamped)
     }
 
+    private func bottomRow(_ w: CGFloat) -> some View {
+        HStack(spacing: w * 0.04) {
+            if theme.showTrackOutline {
+                TrackOutlineShape(circuitID: model.circuitID)
+                    .stroke(theme.ink, lineWidth: w * 0.008)
+                    .frame(width: w * 0.16, height: w * 0.12)
+            }
+            Text(theme.eventText.uppercased())
+                .font(.system(size: w * 0.03, weight: .bold))
+                .kerning(1.5)
+                .lineLimit(2)
+                .foregroundStyle(theme.ink.opacity(0.75))
+            Spacer()
+        }
+    }
+
     @ViewBuilder
-    private var resultStamp: some View {
+    private func resultStamp(_ w: CGFloat) -> some View {
         if let result {
             Text(result.rawValue)
-                .font(.system(size: 34, weight: .black))
+                .font(.system(size: w * 0.11, weight: .black))
                 .kerning(4)
-                .foregroundStyle(result == .finished ? Color.green : Theme.raceRed)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 6)
+                .foregroundStyle(result == .finished ? Color.green : Color(hex: "E10A17"))
+                .padding(.horizontal, w * 0.045)
+                .padding(.vertical, w * 0.02)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: w * 0.025)
                         .strokeBorder(
-                            result == .finished ? Color.green : Theme.raceRed,
-                            lineWidth: 3
+                            result == .finished ? Color.green : Color(hex: "E10A17"),
+                            lineWidth: w * 0.01
                         )
                 )
                 .rotationEffect(.degrees(-12))
-                .opacity(0.85)
+                .opacity(0.9)
         }
     }
 
     private var hologramSweep: some View {
         GeometryReader { geo in
             LinearGradient(
-                colors: [.clear, .white.opacity(0.28), .cyan.opacity(0.18), .clear],
+                colors: [.clear, .white.opacity(0.32), .cyan.opacity(0.2), .clear],
                 startPoint: .leading,
                 endPoint: .trailing
             )
@@ -223,6 +301,45 @@ struct PassCardView: View {
             .offset(x: shimmerPhase * geo.size.width)
         }
         .allowsHitTesting(false)
+    }
+}
+
+/// Diagonal hazard stripes used for the pass's top and bottom bands.
+struct StripeBand: View {
+    let color: Color
+
+    var body: some View {
+        Canvas { context, size in
+            let stripe = size.height * 1.1
+            var x = -size.height * 2
+            while x < size.width + size.height {
+                var path = Path()
+                path.move(to: CGPoint(x: x, y: size.height))
+                path.addLine(to: CGPoint(x: x + stripe, y: size.height))
+                path.addLine(to: CGPoint(x: x + stripe + size.height, y: 0))
+                path.addLine(to: CGPoint(x: x + size.height, y: 0))
+                path.closeSubpath()
+                context.fill(path, with: .color(color))
+                x += stripe * 2
+            }
+        }
+    }
+}
+
+/// Parallelogram clip for the wordmark chip.
+struct SlantedRect: Shape {
+    /// Horizontal skew as a fraction of height.
+    let skew: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let offset = rect.height * skew
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX + offset, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX - offset, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.closeSubpath()
+        return path
     }
 }
 
@@ -244,12 +361,12 @@ struct BarcodeStripView: View {
                 let barWidth = CGFloat((state >> 33) % 3 + 1)
                 let gap = CGFloat((state >> 40) % 3 + 1)
                 context.fill(
-                    Path(CGRect(x: x, y: 6, width: barWidth, height: size.height - 12)),
+                    Path(CGRect(x: x, y: 5, width: barWidth, height: size.height - 10)),
                     with: .color(.black)
                 )
                 x += barWidth + gap
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .clipShape(RoundedRectangle(cornerRadius: 5))
     }
 }

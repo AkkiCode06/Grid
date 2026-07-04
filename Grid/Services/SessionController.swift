@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import SwiftUI
+import UIKit
 
 /// Drives the session state machine:
 /// idle → passIssued → lightsSequence → racing → ended → idle
@@ -22,6 +23,7 @@ final class SessionController {
     private var lapTimer: Timer?
     private var pitTimer: Timer?
     private var awaySince: Date?
+    private var flagCountThisSession = 0
 
     var driverName: String {
         let stored = UserDefaults.standard.string(forKey: "driverName") ?? ""
@@ -68,6 +70,7 @@ final class SessionController {
     func lightsOut() async {
         guard case .lightsSequence(let pass) = phase else { return }
         let startDate = Date.now
+        flagCountThisSession = 0
 
         SharedStore.saveActiveSession(ActiveSessionSnapshot(
             driverName: pass.driverName,
@@ -117,24 +120,42 @@ final class SessionController {
         Haptics.impact(.rigid)
     }
 
-    /// Leaving the app mid-session starts a grace countdown on the Live
-    /// Activity ("get back before you're yellow flagged"). If they stay away
-    /// past the deadline the widget flips to the yellow flag on its own (the
-    /// activity goes stale at that date). Returning clears everything.
+    /// Leaving the app mid-session starts two grace countdowns on the Live
+    /// Activity (yellow, then red). We send exactly ONE quick update when
+    /// backgrounding — never a held sleep. Holding a background-task
+    /// assertion across a long sleep (which this used to do, waiting through
+    /// both grace periods before ending the task) is exactly the kind of
+    /// thing the watchdog kills apps for; iOS just doesn't guarantee that
+    /// much background time. The actual yellow → red escalation is handled
+    /// without any further app code: it's derived purely from comparing the
+    /// current time to the two deadlines (see `FlagSeverity.resolve`), so
+    /// it's correct the moment the widget redraws for any reason. Returning
+    /// to the app always sends a safe, immediate, foreground correction.
     func handleScenePhase(_ scenePhase: ScenePhase) {
         guard case .racing = phase else { return }
         switch scenePhase {
         case .background:
             guard pitUntil == nil else { return } // pit stop = licensed to leave
             awaySince = .now
-            let deadline = Date.now.addingTimeInterval(AppConfig.flagGraceSeconds)
+            flagCountThisSession += 1
+            let yellowDeadline = Date.now.addingTimeInterval(AppConfig.flagGraceSeconds)
+            let redDeadline = yellowDeadline.addingTimeInterval(AppConfig.redFlagGraceSeconds)
+
+            var bgTask: UIBackgroundTaskIdentifier = .invalid
+            bgTask = UIApplication.shared.beginBackgroundTask(withName: "grid.away.flag") {
+                if bgTask != .invalid { UIApplication.shared.endBackgroundTask(bgTask); bgTask = .invalid }
+            }
             Task(priority: .userInitiated) {
-                await liveActivity.startAway(deadline: deadline)
+                await liveActivity.startAway(yellowDeadline: yellowDeadline, redDeadline: redDeadline)
+                if bgTask != .invalid {
+                    UIApplication.shared.endBackgroundTask(bgTask)
+                    bgTask = .invalid
+                }
             }
         case .active:
             if awaySince != nil {
                 awaySince = nil
-                Task { await liveActivity.clearAway() }
+                Task { await liveActivity.resolveOnForeground() }
             }
             tick()
         default:
@@ -255,8 +276,10 @@ final class SessionController {
             plannedSeconds: pass.durationSeconds,
             completedSeconds: completed,
             lapSeconds: pass.circuit.lapSeconds,
-            result: result
+            result: result,
+            flagCount: flagCountThisSession
         )
+        flagCountThisSession = 0
         modelContext?.insert(record)
         try? modelContext?.save()
 

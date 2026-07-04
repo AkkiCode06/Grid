@@ -7,6 +7,9 @@ enum AppConfig {
     /// Grace period after leaving the app before the yellow flag drops.
     static let flagGraceSeconds: TimeInterval = 20
 
+    /// Further time away, after the yellow flag, before it escalates to red.
+    static let redFlagGraceSeconds: TimeInterval = 40
+
     /// While the FamilyControls distribution entitlement is pending, the whole
     /// session flow runs without applying a real shield. The live value is the
     /// "simulationMode" UserDefaults key (toggleable in Settings); this is

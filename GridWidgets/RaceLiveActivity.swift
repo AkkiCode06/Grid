@@ -2,6 +2,36 @@ import ActivityKit
 import WidgetKit
 import SwiftUI
 
+/// FlagSeverity itself lives in Shared/RaceActivityAttributes.swift so the
+/// app and widget agree on the exact same time-based logic. This extension
+/// just adds the widget-only presentation bits (icon/tint) and a
+/// context-based convenience resolver.
+extension FlagSeverity {
+    static func resolve(_ context: ActivityViewContext<RaceActivityAttributes>) -> FlagSeverity {
+        resolve(
+            awayDeadline: context.state.awayDeadline,
+            redDeadline: context.state.redDeadline,
+            isStale: context.isStale
+        )
+    }
+
+    var tint: Color {
+        switch self {
+        case .none: return .red        // normal race = red checkered accent
+        case .warning: return .orange
+        case .yellow, .red: return .yellow
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .none: return "flag.checkered"
+        case .warning: return "exclamationmark.triangle.fill"
+        case .yellow, .red: return "flag.fill"
+        }
+    }
+}
+
 struct RaceLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: RaceActivityAttributes.self) { context in
@@ -9,51 +39,139 @@ struct RaceLiveActivity: Widget {
                 .activityBackgroundTint(Color.black.opacity(0.85))
                 .activitySystemActionForegroundColor(.white)
         } dynamicIsland: { context in
-            DynamicIsland {
+            let severity = FlagSeverity.resolve(context)
+
+            return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(context.attributes.circuitName)
-                            .font(.caption.weight(.semibold))
-                            .lineLimit(1)
-                        Text(context.attributes.teamName.uppercased())
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
+                    Image(context.attributes.teamAssetName)
+                        .resizable()
+                        .scaledToFit()
+                        .scaleEffect(x: -1, y: 1)
+                        .frame(width: 46, height: 32)
+                        .saturation(severity == .none || severity == .warning ? 1 : 0)
+                        .padding(.leading, 4)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text(timerInterval: context.state.startDate...context.state.endDate,
-                             countsDown: true)
-                            .font(.title3.weight(.bold).monospacedDigit())
-                            .multilineTextAlignment(.trailing)
-                            .frame(maxWidth: 70)
-                        Text("LAP \(context.state.currentLap)/\(context.state.totalLaps)")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                    }
+                    expandedTrailing(context: context, severity: severity)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    ProgressView(timerInterval: context.state.startDate...context.state.endDate,
-                                 countsDown: false, label: { EmptyView() },
-                                 currentValueLabel: { EmptyView() })
-                        .progressViewStyle(.linear)
-                        .tint(.red)
+                    expandedBottom(context: context, severity: severity)
                 }
             } compactLeading: {
-                let away = context.state.awayDeadline != nil
-                Image(systemName: away ? "flag.fill" : "flag.checkered")
-                    .foregroundStyle(away ? .yellow : .red)
+                Image(systemName: severity.icon)
+                    .foregroundStyle(severity.tint)
+                    .symbolEffect(.pulse, options: .repeating, isActive: severity == .warning)
             } compactTrailing: {
-                Text(timerInterval: context.state.startDate...context.state.endDate,
-                     countsDown: true)
+                compactTrailing(context: context, severity: severity)
+            } minimal: {
+                Image(systemName: severity.icon)
+                    .foregroundStyle(severity.tint)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func expandedTrailing(
+        context: ActivityViewContext<RaceActivityAttributes>, severity: FlagSeverity
+    ) -> some View {
+        switch severity {
+        case .warning:
+            if let deadline = context.state.awayDeadline, deadline > Date.now {
+                Text(timerInterval: Date.now...deadline, countsDown: true)
+                    .font(.title2.weight(.heavy).monospacedDigit())
+                    .foregroundStyle(.orange)
+                    .multilineTextAlignment(.trailing)
+                    .frame(maxWidth: 74)
+            }
+        case .yellow:
+            if let deadline = context.state.redDeadline, deadline > Date.now {
+                Text(timerInterval: Date.now...deadline, countsDown: true)
+                    .font(.title2.weight(.heavy).monospacedDigit())
+                    .foregroundStyle(.yellow)
+                    .multilineTextAlignment(.trailing)
+                    .frame(maxWidth: 74)
+            }
+        case .none, .red:
+            Text(timerInterval: context.state.startDate...context.state.endDate, countsDown: true)
+                .font(.title2.weight(.heavy).monospacedDigit())
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.trailing)
+                .frame(maxWidth: 96)
+        }
+    }
+
+    @ViewBuilder
+    private func expandedBottom(
+        context: ActivityViewContext<RaceActivityAttributes>, severity: FlagSeverity
+    ) -> some View {
+        switch severity {
+        case .red:
+            Label("RED FLAGGED", systemImage: "flag.fill")
+                .font(.subheadline.weight(.black))
+                .foregroundStyle(.red)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        case .yellow:
+            Label("YELLOW FLAGGED", systemImage: "flag.fill")
+                .font(.subheadline.weight(.black))
+                .foregroundStyle(.yellow)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        case .warning:
+            HStack(spacing: 6) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                    .symbolEffect(.pulse, options: .repeating)
+                Text("GET BACK TO GRID BEFORE YELLOW FLAG")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.orange)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+        case .none:
+            HStack {
+                Text(context.attributes.circuitName)
+                    .font(.caption.weight(.semibold))
+                    .lineLimit(1)
+                Spacer()
+                Text("\(context.attributes.teamName.uppercased()) • LAP \(context.state.currentLap)/\(context.state.totalLaps)")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func compactTrailing(
+        context: ActivityViewContext<RaceActivityAttributes>, severity: FlagSeverity
+    ) -> some View {
+        switch severity {
+        case .warning:
+            if let deadline = context.state.awayDeadline, deadline > Date.now {
+                Text(timerInterval: Date.now...deadline, countsDown: true)
                     .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.orange)
                     .frame(maxWidth: 44)
                     .multilineTextAlignment(.trailing)
-            } minimal: {
-                let away = context.state.awayDeadline != nil
-                Image(systemName: away ? "flag.fill" : "flag.checkered")
-                    .foregroundStyle(away ? .yellow : .red)
             }
+        case .yellow:
+            Text("FLAG")
+                .font(.system(size: 10).weight(.black))
+                .foregroundStyle(.yellow)
+                .lineLimit(1)
+                .fixedSize()
+        case .red:
+            Text("RED")
+                .font(.system(size: 10).weight(.black))
+                .foregroundStyle(.red)
+                .lineLimit(1)
+                .fixedSize()
+        case .none:
+            Text(timerInterval: context.state.startDate...context.state.endDate, countsDown: true)
+                .font(.caption2.monospacedDigit())
+                .frame(maxWidth: 44)
+                .multilineTextAlignment(.trailing)
         }
     }
 }
@@ -61,66 +179,77 @@ struct RaceLiveActivity: Widget {
 private struct LockScreenRaceView: View {
     let context: ActivityViewContext<RaceActivityAttributes>
 
-    private var teamColor: Color { Color(hex: context.attributes.teamColorHex) }
-
-    /// Away = user left the app. Flagged = away long enough that the grace
-    /// window elapsed (the activity went stale at the deadline).
-    private var isAway: Bool { context.state.awayDeadline != nil }
-    private var isFlagged: Bool { isAway && context.isStale }
+    private var severity: FlagSeverity { FlagSeverity.resolve(context) }
 
     var body: some View {
         HStack(spacing: 14) {
-            // Car — front faces right, toward the message.
-            Image(systemName: "car.side.fill")
-                .font(.system(size: 34))
+            // Team car — front faces right, toward the message.
+            Image(context.attributes.teamAssetName)
+                .resizable()
+                .scaledToFit()
                 .scaleEffect(x: -1, y: 1) // flip so the nose points right
-                .foregroundStyle(isFlagged ? .yellow : teamColor)
-                .shadow(color: (isFlagged ? Color.yellow : teamColor).opacity(0.6), radius: 4)
-                .frame(width: 52)
+                .frame(width: 58, height: 40)
+                .saturation(severity == .none || severity == .warning ? 1 : 0)
+                .opacity(severity == .none ? 1 : 0.9)
 
             // Middle message
-            VStack(alignment: .leading, spacing: 3) {
-                if isFlagged {
-                    Text("YELLOW FLAGGED")
-                        .font(.headline.weight(.black))
-                        .foregroundStyle(.yellow)
-                    Text(context.attributes.circuitName)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                } else if isAway {
-                    Text("Get back to Grid")
-                        .font(.subheadline.weight(.bold))
-                    Text("before you're yellow flagged")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text(context.attributes.circuitName)
-                        .font(.subheadline.weight(.bold))
-                        .lineLimit(1)
-                    Text("\(context.attributes.teamName.uppercased()) • LAP \(context.state.currentLap)/\(context.state.totalLaps)")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
+            HStack(spacing: 8) {
+                if severity != .none {
+                    Image(systemName: severity.icon)
+                        .font(.title3)
+                        .foregroundStyle(severity.tint)
+                        .symbolEffect(.pulse, options: .repeating, isActive: severity == .warning)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    switch severity {
+                    case .red:
+                        Text("RED FLAGGED")
+                            .font(.headline.weight(.black))
+                            .foregroundStyle(.red)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                        Text("session at risk — get back now")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    case .yellow:
+                        Text("YELLOW FLAGGED")
+                            .font(.headline.weight(.black))
+                            .foregroundStyle(.yellow)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    case .warning:
+                        Text("GET BACK TO GRID")
+                            .font(.subheadline.weight(.black))
+                            .foregroundStyle(.orange)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                        Text("before you're yellow flagged")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    case .none:
+                        Text(context.attributes.circuitName)
+                            .font(.subheadline.weight(.bold))
+                            .lineLimit(1)
+                        Text("\(context.attributes.teamName.uppercased()) • LAP \(context.state.currentLap)/\(context.state.totalLaps)")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
                 }
             }
 
             Spacer(minLength: 4)
 
-            // Right — grace countdown while away (not yet flagged),
-            // otherwise the session time remaining.
+            // Right — countdown to the next escalation, or the session
+            // timer once green or fully red.
             Group {
-                if isAway && !isFlagged, let deadline = context.state.awayDeadline {
-                    VStack(alignment: .trailing, spacing: 1) {
-                        Text(timerInterval: Date.now...deadline, countsDown: true)
-                            .font(.system(.title, design: .rounded).weight(.heavy))
-                            .monospacedDigit()
-                            .foregroundStyle(.yellow)
-                            .frame(maxWidth: 66, alignment: .trailing)
-                        Text("TO FLAG")
-                            .font(.system(size: 8).weight(.bold))
-                            .foregroundStyle(.secondary)
-                    }
+                if severity == .warning, let deadline = context.state.awayDeadline, deadline > Date.now {
+                    countdown(to: deadline, label: "TO FLAG", color: .orange)
+                } else if severity == .yellow, let deadline = context.state.redDeadline, deadline > Date.now {
+                    countdown(to: deadline, label: "TO RED", color: .yellow)
                 } else {
                     Text(timerInterval: context.state.startDate...context.state.endDate,
                          countsDown: true)
@@ -136,8 +265,20 @@ private struct LockScreenRaceView: View {
         .padding(.vertical, 14)
         .foregroundStyle(.white)
     }
-}
 
+    private func countdown(to deadline: Date, label: String, color: Color) -> some View {
+        VStack(alignment: .trailing, spacing: 1) {
+            Text(timerInterval: Date.now...deadline, countsDown: true)
+                .font(.system(.title, design: .rounded).weight(.heavy))
+                .monospacedDigit()
+                .foregroundStyle(color)
+                .frame(maxWidth: 66, alignment: .trailing)
+            Text(label)
+                .font(.system(size: 8).weight(.bold))
+                .foregroundStyle(.secondary)
+        }
+    }
+}
 
 // Local hex initialiser — the widget target doesn't compile Theme.swift.
 extension Color {

@@ -24,11 +24,9 @@ struct OnboardingView: View {
     @State private var localName = ""
     @State private var localTeamID = TeamLibrary.all[0].id
     @State private var signProgress: CGFloat = 0.0
-    @State private var sealStamp = false
     @State private var isExiting = false
     @State private var isDrivingOff = false
     @State private var logoGlow = false
-    @State private var showPaywall = false
 
     var body: some View {
         ZStack {
@@ -562,16 +560,19 @@ struct OnboardingView: View {
 
     private var fullPlanView: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("YOUR RACE PLAN")
-                .font(.gilroy(12, .bold))
-                .kerning(3)
-                .foregroundStyle(.white.opacity(0.5))
-                .padding(.top, 20)
-
             Spacer(minLength: 20)
 
-            // Archetype — the hero
+            // Header + archetype read as one hero block
             VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 8) {
+                    Image(systemName: "flag.checkered")
+                        .font(.system(size: 11, weight: .bold))
+                    Text("YOUR RACE PLAN")
+                        .font(.gilroy(12, .bold))
+                        .kerning(3)
+                }
+                .foregroundStyle(.white.opacity(0.5))
+
                 Text(archetype.title)
                     .font(.gilroy(40, .black))
                     .foregroundStyle(Theme.raceRed)
@@ -723,34 +724,50 @@ struct OnboardingView: View {
     // MARK: - Greeting (personalized hand-off to team pick)
 
     private var greetingStep: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Spacer()
+        ZStack {
+            planBackground
 
-            Text("HEY \(driverName.uppercased()).")
-                .font(.gilroy(40, .black))
-                .foregroundStyle(.white)
+            VStack(alignment: .leading, spacing: 0) {
+                Spacer()
 
-            Text("Every driver needs a team. Pick your colours — it liveries your paddock pass and puts your name on the timing screen.")
-                .font(.gilroy(17, .medium))
-                .foregroundStyle(.white.opacity(0.6))
+                HStack(spacing: 8) {
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 11, weight: .bold))
+                    Text("DRIVER \(driverName.uppercased())")
+                        .font(.gilroy(12, .bold))
+                        .kerning(3)
+                }
+                .foregroundStyle(.white.opacity(0.5))
+                .padding(.bottom, 16)
 
-            Spacer()
+                Text("HEY\n\(driverName.uppercased()).")
+                    .font(.gilroy(52, .black))
+                    .foregroundStyle(.white)
+                    .lineSpacing(-6)
 
-            Button {
-                Haptics.impact(.medium)
-                withAnimation(.easeInOut(duration: 0.6)) { step = 7 }
-            } label: {
-                Text("CHOOSE MY TEAM")
-                    .font(.gilroy(18, .bold))
-                    .kerning(2)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 20)
-                    .background(.white, in: RoundedRectangle(cornerRadius: 16))
-                    .foregroundStyle(.black)
+                Text("Every driver needs a team. Pick your colours — it liveries your paddock pass and puts your name on the timing screen.")
+                    .font(.gilroy(17, .medium))
+                    .foregroundStyle(.white.opacity(0.6))
+                    .padding(.top, 18)
+
+                Spacer()
+
+                Button {
+                    Haptics.impact(.medium)
+                    withAnimation(.easeInOut(duration: 0.6)) { step = 7 }
+                } label: {
+                    Text("CHOOSE MY TEAM")
+                        .font(.gilroy(18, .bold))
+                        .kerning(2)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 20)
+                        .background(.white, in: RoundedRectangle(cornerRadius: 16))
+                        .foregroundStyle(.black)
+                }
+                .padding(.bottom, 64)
             }
-            .padding(.bottom, 64)
+            .padding(.horizontal, 32)
         }
-        .padding(.horizontal, 32)
         .transition(.opacity)
     }
 
@@ -907,41 +924,27 @@ struct OnboardingView: View {
 
                 Spacer()
             }
-
-            // The seal slams in over the top.
-            Text("SEALED")
-                .font(.gilroy(26, .black))
-                .kerning(4)
-                .foregroundStyle(accent)
-                .padding(.horizontal, 22)
-                .padding(.vertical, 10)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .strokeBorder(accent, lineWidth: 3)
-                )
-                .rotationEffect(.degrees(-14))
-                .scaleEffect(sealStamp ? 1 : 2.4)
-                .opacity(sealStamp ? 0.95 : 0)
-                .offset(y: 150)
         }
         .transition(.opacity)
     }
 
     private func startSigningAnimation() {
         signProgress = 0
-        sealStamp = false
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { Haptics.impact(.light) }
+        // The scribble of a pen writing the signature (bundle a
+        // `signature.m4a`/`.mp3`; no-ops gracefully until then).
+        SoundPlayer.shared.play("signature")
 
         withAnimation(.easeOut(duration: 2.2).delay(0.4)) { signProgress = 1.0 }
 
-        // The seal drops the moment the signature finishes.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.7) {
-            Haptics.impact(.heavy)
-            Haptics.success()
-            withAnimation(.spring(duration: 0.4, bounce: 0.5)) { sealStamp = true }
+        // Light "pen scratch" haptic ticks while the signature writes in.
+        for i in 0..<9 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4 + Double(i) * 0.22) {
+                Haptics.impact(.light)
+            }
         }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.7) { Haptics.success() }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.8) {
             withAnimation(.easeInOut(duration: 0.6)) { step = 9 }
         }
     }
@@ -978,7 +981,7 @@ struct OnboardingView: View {
 
                 Button {
                     Haptics.impact(.heavy)
-                    showPaywall = true
+                    finishOnboarding()
                 } label: {
                     Text("ENTER PADDOCK")
                         .font(.gilroy(18, .bold))
@@ -993,15 +996,9 @@ struct OnboardingView: View {
             }
         }
         .transition(.opacity.combined(with: .scale(scale: 0.95)))
-        .sheet(isPresented: $showPaywall) {
-            OnboardingPaywallView(onFinish: finishOnboarding)
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-        }
     }
 
     private func finishOnboarding() {
-        showPaywall = false
         withAnimation(.easeIn(duration: 0.5)) { isExiting = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
             withAnimation(.easeOut(duration: 0.6)) {

@@ -10,6 +10,9 @@ struct SettingsView: View {
     @AppStorage("simulationMode") private var simulationMode = true
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = true
     @AppStorage("customDurationMinutes") private var customMinutes = 30
+    #if DEBUG
+    @AppStorage("debugFullAccess") private var debugFullAccess = true
+    #endif
 
     @State private var showingActivityPicker = false
     @State private var showingPassStudio = false
@@ -175,6 +178,30 @@ struct SettingsView: View {
 
     private var developerSection: some View {
         SettingsCard(title: "DEVELOPER", icon: "hammer.fill") {
+            #if DEBUG
+            HStack {
+                Image(systemName: "lock.open.fill")
+                    .foregroundStyle(Theme.raceRed)
+                    .frame(width: 26)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Pro access")
+                        .font(.gilroy(15, .semiBold))
+                        .foregroundStyle(.white)
+                    Text(debugFullAccess ? "Everything unlocked" : "Free tier — paywalls active")
+                        .font(.gilroy(11, .medium))
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                Spacer()
+                Toggle("", isOn: $debugFullAccess)
+                    .labelsHidden()
+                    .tint(Theme.raceRed)
+            }
+            .settingsRow()
+            .onChange(of: debugFullAccess) { _, newValue in
+                StoreService.shared.debugSetFullAccess(newValue)
+            }
+            #endif
+
             Button {
                 Haptics.warning()
                 hasCompletedOnboarding = false

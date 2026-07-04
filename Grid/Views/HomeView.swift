@@ -14,9 +14,12 @@ struct HomeView: View {
     @AppStorage("selectedTeamID") private var selectedTeamID = TeamLibrary.all[0].id
     @State private var customMinutes: Int = 30
     @State private var showingRaceLog = false
-    @State private var showingSettings = false
-    @State private var showingPaywall = false
+    @State private var showingProfile = false
+    @State private var paywallLock: PaywallLock?
     @State private var showingPassStudio = false
+    @AppStorage("hasSeenOnboardingPaywall") private var hasSeenOnboardingPaywall = false
+    @State private var showingOnboardingPaywall = false
+    @State private var showProPassReveal = false
 
     private var store: StoreService { StoreService.shared }
 
@@ -32,13 +35,20 @@ struct HomeView: View {
         !circuit.isFree && !store.hasFullAccess
     }
 
+    /// True when a sheet or cover is on top of the paddock — pause the heavy
+    /// satellite flyover so it isn't streaming/animating behind an opaque view.
+    private var isCovered: Bool {
+        showingRaceLog || showingProfile || showingPassStudio
+            || showingOnboardingPaywall || showProPassReveal || paywallLock != nil
+    }
+
     var body: some View {
         ZStack {
             // Background Flyover
             if CircuitGeo.coordinates(for: selectedCircuit.id) != nil {
                 CircuitFlyoverView(
                     circuitID: selectedCircuit.id,
-                    isPaused: false,
+                    isPaused: isCovered,
                     dualMode: true
                 )
                 .ignoresSafeArea()
@@ -97,11 +107,58 @@ struct HomeView: View {
             }
         }
         .sheet(isPresented: $showingRaceLog) { RaceLogView() }
-        .sheet(isPresented: $showingSettings) { SettingsView() }
-        .sheet(isPresented: $showingPaywall) { PaywallView() }
+        .sheet(isPresented: $showingProfile) { ProfileView() }
+        .sheet(item: $paywallLock) { lock in
+            OnboardingPaywallView(
+                onSubscribe: {
+                    StoreService.shared.grantPlaceholderUnlock()
+                    paywallLock = nil
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        showProPassReveal = true
+                    }
+                },
+                onClose: { paywallLock = nil },
+                lock: lock
+            )
+            .presentationDetents([.height(720)])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(28)
+        }
         .sheet(isPresented: $showingPassStudio) { PassStudioView() }
+        .sheet(isPresented: $showingOnboardingPaywall) {
+            OnboardingPaywallView(
+                onSubscribe: {
+                    StoreService.shared.grantPlaceholderUnlock()
+                    showingOnboardingPaywall = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        showProPassReveal = true
+                    }
+                },
+                onClose: { showingOnboardingPaywall = false }
+            )
+            .presentationDetents([.height(660)])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(28)
+        }
+        .fullScreenCover(isPresented: $showProPassReveal) {
+            ProPassRevealView(driverName: session.driverName) {
+                showProPassReveal = false
+            }
+        }
         .onAppear {
             customMinutes = session.customDurationMinutes
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("-uitest-propass") {
+                showProPassReveal = true
+            }
+            #endif
+            // First time landing in the paddock after onboarding: offer Pro.
+            if !hasSeenOnboardingPaywall {
+                hasSeenOnboardingPaywall = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    showingOnboardingPaywall = true
+                }
+            }
             if !hasSeenSwipeHint {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                     withAnimation(.easeIn(duration: 0.5)) { swipeHintVisible = true }
@@ -137,9 +194,16 @@ struct HomeView: View {
             Spacer()
 
             HStack(spacing: 12) {
-                actionIcon(systemName: "paintbrush.fill") { showingPassStudio = true }
+                actionIcon(systemName: "paintbrush.fill") {
+                    if store.hasFullAccess {
+                        showingPassStudio = true
+                    } else {
+                        Haptics.impact(.rigid)
+                        paywallLock = .passStudio
+                    }
+                }
                 actionIcon(systemName: "flag.checkered") { showingRaceLog = true }
-                actionIcon(systemName: "gearshape.fill") { showingSettings = true }
+                actionIcon(systemName: "person.crop.circle.fill") { showingProfile = true }
             }
             .padding(.top, 4)
         }
@@ -246,7 +310,8 @@ struct HomeView: View {
     private var issueButton: some View {
         Button {
             if isLocked(selectedCircuit) {
-                showingPaywall = true
+                Haptics.impact(.rigid)
+                paywallLock = .circuit(selectedCircuit)
             } else {
                 Haptics.impact(.medium)
                 session.issuePass(circuit: selectedCircuit, team: selectedTeam)

@@ -1,56 +1,36 @@
 import SwiftUI
 import SwiftData
 
-/// The retention hook: stats on how well you're staying locked in, plus a
-/// scrollable collection of every stamped pass, finished and DNF alike.
+/// The retention hook: a scrollable collection of every stamped pass,
+/// finished and DNF alike. (Stats now live under Profile.)
 struct RaceLogView: View {
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \RaceRecord.startDate, order: .reverse) private var records: [RaceRecord]
 
-    @State private var tab: Tab = .stats
-
-    private enum Tab: String, CaseIterable {
-        case stats = "Stats"
-        case log = "Log"
-    }
-
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Picker("", selection: $tab) {
-                    ForEach(Tab.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-                .padding(.bottom, 4)
-
-                switch tab {
-                case .stats:
-                    StatsView(records: records)
-                case .log:
-                    if records.isEmpty {
-                        ContentUnavailableView(
-                            "No sessions yet",
-                            systemImage: "flag.checkered",
-                            description: Text("Stamp your first paddock pass to start your Race Log.")
-                        )
-                        .frame(maxHeight: .infinity)
-                    } else {
-                        ScrollView {
-                            LazyVStack(spacing: 12) {
-                                ForEach(records) { record in
-                                    RaceLogRow(record: record)
-                                }
+                if records.isEmpty {
+                    ContentUnavailableView(
+                        "No sessions yet",
+                        systemImage: "flag.checkered",
+                        description: Text("Stamp your first paddock pass to start your activity log.")
+                    )
+                    .frame(maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 12) {
+                            ForEach(records) { record in
+                                RaceLogRow(record: record)
                             }
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 12)
                         }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
                     }
                 }
             }
             .background(Theme.background)
-            .navigationTitle("Race Log")
+            .navigationTitle("Activity")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

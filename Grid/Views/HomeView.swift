@@ -108,7 +108,7 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showingRaceLog) { RaceLogView() }
         .sheet(isPresented: $showingProfile) { ProfileView() }
-        .sheet(item: $paywallLock) { lock in
+        .fullScreenCover(item: $paywallLock) { lock in
             OnboardingPaywallView(
                 onSubscribe: {
                     StoreService.shared.grantPlaceholderUnlock()
@@ -120,12 +120,9 @@ struct HomeView: View {
                 onClose: { paywallLock = nil },
                 lock: lock
             )
-            .presentationDetents([.height(720)])
-            .presentationDragIndicator(.visible)
-            .presentationCornerRadius(28)
         }
         .sheet(isPresented: $showingPassStudio) { PassStudioView() }
-        .sheet(isPresented: $showingOnboardingPaywall) {
+        .fullScreenCover(isPresented: $showingOnboardingPaywall) {
             OnboardingPaywallView(
                 onSubscribe: {
                     StoreService.shared.grantPlaceholderUnlock()
@@ -136,9 +133,6 @@ struct HomeView: View {
                 },
                 onClose: { showingOnboardingPaywall = false }
             )
-            .presentationDetents([.height(660)])
-            .presentationDragIndicator(.visible)
-            .presentationCornerRadius(28)
         }
         .fullScreenCover(isPresented: $showProPassReveal) {
             ProPassRevealView(driverName: session.driverName) {

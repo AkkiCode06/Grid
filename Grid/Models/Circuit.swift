@@ -123,7 +123,7 @@ enum CircuitLibrary {
             flag: "🇦🇿",
             durationMinutes: 90,
             lapSeconds: 104,
-            isFree: false,
+            isFree: true,
             skyColors: ["E8C39E", "C77D4A", "2E2233"]
         ),
         Circuit(
@@ -133,7 +133,7 @@ enum CircuitLibrary {
             flag: "🇳🇱",
             durationMinutes: 25,
             lapSeconds: 72,
-            isFree: false,
+            isFree: true,
             skyColors: ["BCD4E6", "6A9BC3", "2A3F55"]
         ),
         Circuit(
@@ -143,7 +143,7 @@ enum CircuitLibrary {
             flag: "🇦🇹",
             durationMinutes: 40,
             lapSeconds: 67,
-            isFree: false,
+            isFree: true,
             skyColors: ["A7D3A7", "5E9C6B", "243B2E"]
         ),
         Circuit(

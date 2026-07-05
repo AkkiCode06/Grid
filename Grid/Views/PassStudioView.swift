@@ -119,9 +119,9 @@ struct PassStudioView: View {
     /// Radiant holographic "PRO GRID" badge.
     private var proBadge: some View {
         HStack(spacing: 6) {
-            Image(systemName: isPro ? "seal.fill" : "lock.fill")
+            Image(systemName: "seal.fill")
                 .font(.system(size: 11, weight: .bold))
-            Text(isPro ? "PRO GRID MEMBER" : "PRO — UNLOCK HOLO")
+            Text("PRO GRID MEMBER")
                 .font(.gilroy(11, .black))
                 .kerning(1.5)
         }
@@ -280,7 +280,9 @@ struct PartEditorPanel: View {
         editorLabel("TEXTURE")
         HStack(spacing: 8) {
             ForEach(PassTexture.allCases, id: \.self) { texture in
-                let locked = texture == .holographic && !isPro
+                // Pass Studio is itself Pro-gated, so everything inside —
+                // including the holographic finish — is included.
+                let locked = false
                 let selected = theme.texture == texture
                 Button {
                     guard !locked else { Haptics.warning(); return }

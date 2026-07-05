@@ -12,6 +12,8 @@ struct Team: Identifiable, Codable, Hashable {
     let threeLetterCode: String
     let carNumber: Int
     let assetName: String
+    /// Premium livery — only selectable with Pro.
+    var isPro: Bool = false
 }
 
 enum TeamLibrary {
@@ -34,7 +36,27 @@ enum TeamLibrary {
         Team(id: "ivory", name: "Ivory Privateers", tagline: "Vintage speed",
              accentHex: "F2EDE4", inkHex: "17171A", foilHex: "D9B45B",
              threeLetterCode: "IVO", carNumber: 77, assetName: "team_ivory"),
+
+        // MARK: Premium liveries (Pro)
+        Team(id: "cobalt", name: "Cobalt Dynamics", tagline: "Voltage unleashed",
+             accentHex: "1F6FEB", inkHex: "F5F5F7", foilHex: "36E2FF",
+             threeLetterCode: "COB", carNumber: 9, assetName: "team_cobalt", isPro: true),
+        Team(id: "solaris", name: "Solaris Works", tagline: "Chase the sun",
+             accentHex: "FFC300", inkHex: "17171A", foilHex: "17171A",
+             threeLetterCode: "SOL", carNumber: 27, assetName: "team_solaris", isPro: true),
+        Team(id: "onyx", name: "Onyx Prestige", tagline: "Black gold",
+             accentHex: "0E0E10", inkHex: "F5F5F7", foilHex: "D9B45B",
+             threeLetterCode: "ONX", carNumber: 1, assetName: "team_onyx", isPro: true),
+        Team(id: "magenta", name: "Magenta Volt", tagline: "Electric edge",
+             accentHex: "E5006E", inkHex: "F5F5F7", foilHex: "FF9EC7",
+             threeLetterCode: "MGV", carNumber: 88, assetName: "team_magenta", isPro: true),
+        Team(id: "crimson", name: "Crimson Apex", tagline: "Point of no return",
+             accentHex: "8B0000", inkHex: "F5F5F7", foilHex: "FF5A3C",
+             threeLetterCode: "CRA", carNumber: 51, assetName: "team_crimson", isPro: true),
     ]
+
+    /// Teams available on the free tier.
+    static var free: [Team] { all.filter { !$0.isPro } }
 
     static func team(id: String) -> Team? {
         all.first { $0.id == id }

@@ -35,6 +35,10 @@ Live Activity in the Dynamic Island. Leave early and your pass is stamped
 | :---: | :---: | :---: |
 | ![Circuit select](docs/screenshot-circuit-select.png) | ![Paddock pass](docs/screenshot-paddock-pass.png) | ![Racing](docs/screenshot-racing.png) |
 
+| Go Pro | Membership pass |
+| :---: | :---: |
+| ![Go Pro](docs/screenshot-paywall.png) | ![Pro pass](docs/screenshot-propass.png) |
+
 </div>
 
 ## How it works

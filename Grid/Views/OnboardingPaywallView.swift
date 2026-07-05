@@ -34,6 +34,24 @@ struct PaywallLock: Identifiable {
         headline: "Pass Studio is Pro turf",
         pitch: "Design your own holographic paddock pass, unlock every livery, and carry the 3D Pro card. Locked right now."
     )
+
+    /// The 3D Pro membership card viewer.
+    static let proCard = PaywallLock(
+        icon: "person.text.rectangle.fill",
+        feature: "Grid Pass",
+        headline: "Claim your Grid Pass",
+        pitch: "The 3D Pro membership card — gyro-reactive, holographic, stamped with every trophy you earn. Members only."
+    )
+
+    /// A premium (Pro-only) livery the user tried to select.
+    static func livery(_ t: Team) -> PaywallLock {
+        PaywallLock(
+            icon: "paintpalette.fill",
+            feature: t.name,
+            headline: "\(t.name) is a Pro livery",
+            pitch: "This livery — and every premium colourway — unlocks with Grid Pro, along with all circuits and your 3D pass."
+        )
+    }
 }
 
 /// The Pro paywall — cinematic full-bleed. A live 3D flyover of the circuit
@@ -52,8 +70,34 @@ struct OnboardingPaywallView: View {
     @State private var selectedPlan: Plan = .yearly
     @State private var showPromo = false
     @State private var promoCode = ""
+    @State private var purchasing = false
 
     private enum Plan { case yearly, monthly }
+
+    private var selectedProductID: String {
+        selectedPlan == .yearly ? AppConfig.proYearlyProductID : AppConfig.proMonthlyProductID
+    }
+
+    private func buy() {
+        guard !purchasing else { return }
+        purchasing = true
+        Task {
+            let ok = await StoreService.shared.purchase(productID: selectedProductID)
+            await MainActor.run {
+                purchasing = false
+                if ok { Haptics.success(); onSubscribe() }
+                else { Haptics.warning() }
+            }
+        }
+    }
+
+    private func redeem() {
+        #if DEBUG
+        StoreService.shared.debugSetFullAccess(true)
+        #endif
+        Haptics.success()
+        onSubscribe()
+    }
 
     private let values: [String] = [
         "All 12 circuits, worldwide",
@@ -223,17 +267,19 @@ struct OnboardingPaywallView: View {
 
     private var cta: some View {
         VStack(spacing: 10) {
-            Button {
-                Haptics.success()
-                onSubscribe()
-            } label: {
-                Text(selectedPlan == .yearly ? "START 7-DAY FREE TRIAL" : "UNLOCK GRID PRO")
-                    .font(.gilroy(16, .bold)).kerning(1.5)
-                    .frame(maxWidth: .infinity).padding(.vertical, 18)
-                    .background(.white, in: RoundedRectangle(cornerRadius: 16))
-                    .foregroundStyle(.black)
-                    .shadow(color: .black.opacity(0.4), radius: 12, y: 6)
+            Button(action: buy) {
+                ZStack {
+                    Text(selectedPlan == .yearly ? "START 7-DAY FREE TRIAL" : "UNLOCK GRID PRO")
+                        .font(.gilroy(16, .bold)).kerning(1.5)
+                        .opacity(purchasing ? 0 : 1)
+                    if purchasing { ProgressView().tint(.black) }
+                }
+                .frame(maxWidth: .infinity).padding(.vertical, 18)
+                .background(.white, in: RoundedRectangle(cornerRadius: 16))
+                .foregroundStyle(.black)
+                .shadow(color: .black.opacity(0.4), radius: 12, y: 6)
             }
+            .disabled(purchasing)
             Text(selectedPlan == .yearly ? "7 days free, then $29.99/yr · cancel anytime"
                                          : "$4.99/mo · cancel anytime")
                 .font(.gilroy(11, .medium))
@@ -251,10 +297,7 @@ struct OnboardingPaywallView: View {
                         .foregroundStyle(.white)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.characters)
-                    Button {
-                        Haptics.success()
-                        onSubscribe()
-                    } label: {
+                    Button(action: redeem) {
                         Text("REDEEM").font(.gilroy(12, .bold))
                             .foregroundStyle(promoCode.isEmpty ? .white.opacity(0.3) : Theme.raceRed)
                     }
@@ -270,7 +313,15 @@ struct OnboardingPaywallView: View {
                     withAnimation(.snappy) { showPromo.toggle() }
                 }
                 Text("·")
-                Text("Restore"); Text("·"); Text("Terms"); Text("·"); Text("Privacy")
+                Button("Restore") {
+                    Task {
+                        await StoreService.shared.restorePurchases()
+                        await MainActor.run {
+                            if StoreService.shared.hasFullAccess { Haptics.success(); onSubscribe() }
+                        }
+                    }
+                }
+                Text("·"); Text("Terms"); Text("·"); Text("Privacy")
             }
             .font(.gilroy(11, .medium))
             .foregroundStyle(.white.opacity(0.4))

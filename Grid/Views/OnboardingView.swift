@@ -776,7 +776,9 @@ struct OnboardingView: View {
     private var teamStep: some View {
         ZStack {
             TabView(selection: $localTeamID) {
-                ForEach(TeamLibrary.all) { team in
+                // Only free liveries during onboarding; premium ones unlock with
+                // Pro and are pickable later from the Profile.
+                ForEach(TeamLibrary.free) { team in
                     teamCard(for: team, driveOff: isDrivingOff && team.id == localTeamID)
                         .tag(team.id)
                 }

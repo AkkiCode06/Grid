@@ -16,6 +16,13 @@ struct ProfileView: View {
     @State private var showingPass = false
     @State private var pickerItem: PhotosPickerItem?
     @State private var pfpImage: UIImage?
+    @State private var paywallLock: PaywallLock?
+
+    private var isPro: Bool { StoreService.shared.hasFullAccess }
+
+    private var finishedSessions: Int {
+        records.filter { $0.result == .finished }.count
+    }
 
     private var team: Team {
         TeamLibrary.team(id: selectedTeamID) ?? TeamLibrary.all[0]
@@ -37,6 +44,7 @@ struct ProfileView: View {
                 VStack(spacing: 24) {
                     profileHeader
                     passButton
+                    liverySection
                     statsSection
                 }
                 .padding(.horizontal, 18)
@@ -79,7 +87,20 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $showingSettings) { SettingsView() }
             .fullScreenCover(isPresented: $showingPass) {
-                GridPassViewer(driverName: displayName) { showingPass = false }
+                GridPassViewer(driverName: displayName,
+                               finishedSessions: finishedSessions) { showingPass = false }
+            }
+            .fullScreenCover(item: $paywallLock) { lock in
+                OnboardingPaywallView(
+                    onSubscribe: {
+                        paywallLock = nil
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                            showingPass = true
+                        }
+                    },
+                    onClose: { paywallLock = nil },
+                    lock: lock
+                )
             }
         }
         .preferredColorScheme(.dark)
@@ -150,10 +171,14 @@ struct ProfileView: View {
     private var passButton: some View {
         Button {
             Haptics.impact(.medium)
-            showingPass = true
+            if isPro {
+                showingPass = true
+            } else {
+                paywallLock = .proCard
+            }
         } label: {
             HStack(spacing: 14) {
-                Image(systemName: "person.text.rectangle.fill")
+                Image(systemName: isPro ? "person.text.rectangle.fill" : "lock.fill")
                     .font(.system(size: 22))
                     .foregroundStyle(Theme.raceRed)
                     .frame(width: 30)
@@ -161,7 +186,7 @@ struct ProfileView: View {
                     Text("Your Grid Pass")
                         .font(.gilroy(16, .bold))
                         .foregroundStyle(.white)
-                    Text("View your membership card")
+                    Text(isPro ? "View your membership card" : "Go Pro to claim your 3D card")
                         .font(.gilroy(12, .medium))
                         .foregroundStyle(Theme.textSecondary)
                 }
@@ -176,6 +201,67 @@ struct ProfileView: View {
                 RoundedRectangle(cornerRadius: 16)
                     .strokeBorder(Theme.raceRed.opacity(0.35), lineWidth: 1)
             )
+        }
+    }
+
+    // MARK: - Livery
+
+    private var liverySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("YOUR LIVERY")
+                .font(.gilroy(12, .bold)).kerning(2)
+                .foregroundStyle(Theme.textSecondary)
+                .padding(.horizontal, 4)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(TeamLibrary.all) { t in
+                        liveryChip(t)
+                    }
+                }
+                .padding(.horizontal, 4)
+            }
+        }
+    }
+
+    private func liveryChip(_ t: Team) -> some View {
+        let selected = t.id == selectedTeamID
+        let locked = t.isPro && !isPro
+        return Button {
+            Haptics.impact(.light)
+            if locked {
+                paywallLock = .livery(t)
+            } else {
+                selectedTeamID = t.id
+                PassThemeStore.shared.applyTeam(t)
+            }
+        } label: {
+            VStack(spacing: 8) {
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient(
+                            colors: [Color(hex: t.accentHex), Color(hex: t.accentHex).opacity(0.5)],
+                            startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .frame(width: 54, height: 54)
+                        .overlay(Circle().strokeBorder(
+                            selected ? .white : .white.opacity(0.15),
+                            lineWidth: selected ? 2.5 : 1))
+                    if locked {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 15, weight: .black))
+                            .foregroundStyle(Color(hex: t.inkHex))
+                    } else {
+                        Text(t.threeLetterCode)
+                            .font(.gilroy(13, .black))
+                            .foregroundStyle(Color(hex: t.inkHex))
+                    }
+                }
+                Text(t.isPro ? "PRO" : t.name.split(separator: " ").first.map(String.init) ?? t.name)
+                    .font(.gilroy(9, .bold))
+                    .foregroundStyle(selected ? .white : Theme.textTertiary)
+                    .lineLimit(1)
+            }
+            .frame(width: 62)
         }
     }
 
@@ -196,6 +282,7 @@ struct ProfileView: View {
 /// Full-screen viewer for the Grid Pro membership pass, reachable from Profile.
 private struct GridPassViewer: View {
     let driverName: String
+    var finishedSessions: Int = 0
     let onClose: () -> Void
 
     var body: some View {
@@ -204,10 +291,10 @@ private struct GridPassViewer: View {
 
             VStack(spacing: 24) {
                 Spacer()
-                GridProPassView(driverName: driverName)
+                GridProPassView(driverName: driverName, finishedSessions: finishedSessions)
                     .frame(maxWidth: 320)
                     .padding(.horizontal, 40)
-                Text("TILT TO WATCH IT SHINE")
+                Text("TAP TO FLIP · TILT TO SHINE")
                     .font(.gilroy(11, .bold))
                     .kerning(2)
                     .foregroundStyle(.white.opacity(0.4))

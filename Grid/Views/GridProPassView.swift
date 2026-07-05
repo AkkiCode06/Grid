@@ -9,8 +9,11 @@ struct GridProPassView: View {
     var memberNumber: Int = 1
     /// When true, the signature writes itself in on appear.
     var animateSignature: Bool = false
+    /// Finished sessions — drives which trophy stamps show on the back.
+    var finishedSessions: Int = 0
 
     @State private var sigProgress: CGFloat = 1
+    @State private var flipped = false
 
     private var joinedLabel: String {
         Date.now.formatted(.dateTime.month(.abbreviated).year()).uppercased()
@@ -19,11 +22,27 @@ struct GridProPassView: View {
     var body: some View {
         GeometryReader { geo in
             let tilt = MotionTilt.shared
-            card(width: geo.size.width)
-                .rotation3DEffect(.degrees(tilt.roll * 14),
-                                  axis: (x: 0, y: 1, z: 0), perspective: 0.5)
-                .rotation3DEffect(.degrees(-tilt.pitch * 11),
-                                  axis: (x: 1, y: 0, z: 0), perspective: 0.5)
+            let w = geo.size.width
+            ZStack {
+                cardFront(width: w)
+                    .opacity(flipped ? 0 : 1)
+                cardBack(width: w)
+                    .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                    .opacity(flipped ? 1 : 0)
+            }
+            .rotation3DEffect(.degrees(flipped ? 180 : 0),
+                              axis: (x: 0, y: 1, z: 0), perspective: 0.5)
+            .rotation3DEffect(.degrees(tilt.roll * 14),
+                              axis: (x: 0, y: 1, z: 0), perspective: 0.5)
+            .rotation3DEffect(.degrees(-tilt.pitch * 11),
+                              axis: (x: 1, y: 0, z: 0), perspective: 0.5)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                Haptics.impact(.rigid)
+                withAnimation(.spring(response: 0.7, dampingFraction: 0.75)) {
+                    flipped.toggle()
+                }
+            }
         }
         .aspectRatio(0.63, contentMode: .fit)
         .onAppear {
@@ -40,7 +59,7 @@ struct GridProPassView: View {
         }
     }
 
-    private func card(width w: CGFloat) -> some View {
+    private func cardFront(width w: CGFloat) -> some View {
         ZStack {
             // Black base with a red glow bleeding up from the bottom.
             RoundedRectangle(cornerRadius: w * 0.07)
@@ -167,6 +186,86 @@ struct GridProPassView: View {
         }
         .shadow(color: Theme.raceRed.opacity(0.25), radius: 30, y: 12)
         .shadow(color: .black.opacity(0.6), radius: 18, y: 10)
+    }
+
+    // MARK: - Back (trophy cabinet)
+
+    private func cardBack(width w: CGFloat) -> some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: w * 0.07)
+                .fill(Color(white: 0.05))
+                .overlay(
+                    RadialGradient(
+                        colors: [Theme.raceRed.opacity(0.45), .clear],
+                        center: UnitPoint(x: 0.5, y: -0.15),
+                        startRadius: 0, endRadius: w * 1.2
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: w * 0.07)
+                        .strokeBorder(
+                            LinearGradient(colors: [.white.opacity(0.25), Theme.raceRed.opacity(0.4)],
+                                           startPoint: .topLeading, endPoint: .bottomTrailing),
+                            lineWidth: 1
+                        )
+                )
+
+            VStack(spacing: w * 0.045) {
+                VStack(spacing: w * 0.012) {
+                    Text("TROPHY CABINET")
+                        .font(.gilroy(w * 0.052, .black))
+                        .kerning(w * 0.01)
+                        .foregroundStyle(.white)
+                    Text("\(driverName.uppercased()) · \(finishedSessions) SESSIONS")
+                        .font(.gilroy(w * 0.03, .bold))
+                        .foregroundStyle(Theme.raceRed)
+                }
+                .padding(.top, w * 0.11)
+
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3),
+                          spacing: w * 0.05) {
+                    ForEach(Achievements.all) { trophy in
+                        trophyStamp(trophy,
+                                    earned: trophy.isEarned(finishedSessions: finishedSessions),
+                                    w: w)
+                    }
+                }
+                .padding(.horizontal, w * 0.04)
+
+                Spacer(minLength: 0)
+
+                Text("TAP TO FLIP")
+                    .font(.gilroy(w * 0.026, .bold))
+                    .kerning(w * 0.01)
+                    .foregroundStyle(.white.opacity(0.3))
+                    .padding(.bottom, w * 0.07)
+            }
+            .padding(.horizontal, w * 0.07)
+        }
+        .shadow(color: Theme.raceRed.opacity(0.25), radius: 30, y: 12)
+        .shadow(color: .black.opacity(0.6), radius: 18, y: 10)
+    }
+
+    private func trophyStamp(_ trophy: Achievement, earned: Bool, w: CGFloat) -> some View {
+        VStack(spacing: w * 0.014) {
+            ZStack {
+                Circle()
+                    .strokeBorder(
+                        earned ? Theme.gold.opacity(0.85) : .white.opacity(0.12),
+                        style: StrokeStyle(lineWidth: w * 0.006,
+                                           dash: [w * 0.022, w * 0.014])
+                    )
+                    .frame(width: w * 0.17, height: w * 0.17)
+                Image(systemName: earned ? trophy.icon : "lock.fill")
+                    .font(.system(size: w * 0.062, weight: .black))
+                    .foregroundStyle(earned ? Theme.gold : .white.opacity(0.16))
+            }
+            Text(earned ? trophy.name.uppercased() : "\(trophy.sessions)")
+                .font(.gilroy(w * 0.022, .bold))
+                .foregroundStyle(earned ? .white.opacity(0.8) : .white.opacity(0.25))
+                .lineLimit(1).minimumScaleFactor(0.6)
+        }
+        .rotationEffect(.degrees(earned ? Double(trophy.sessions % 7) - 3 : 0))
     }
 
     private func detailCell(_ label: String, _ value: String, _ w: CGFloat,

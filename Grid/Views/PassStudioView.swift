@@ -10,6 +10,8 @@ struct PassStudioView: View {
     @AppStorage("driverName") private var driverName = ""
 
     @State private var selectedPart: PassPart?
+    @State private var showingDemo = false
+    @AppStorage("hasSeenStudioDemo") private var hasSeenStudioDemo = false
 
     private var isPro: Bool { StoreService.shared.hasFullAccess }
 
@@ -44,6 +46,14 @@ struct PassStudioView: View {
                             .font(.gilroy(11, .bold))
                             .kerning(2)
                             .foregroundStyle(Theme.textTertiary)
+                        Button {
+                            Haptics.impact(.light)
+                            showingDemo = true
+                        } label: {
+                            Label("Watch how it works", systemImage: "play.circle.fill")
+                                .font(.gilroy(13, .bold))
+                                .foregroundStyle(Theme.raceRed)
+                        }
                         proBadge
                     }
 
@@ -75,6 +85,19 @@ struct PassStudioView: View {
                 .presentationBackgroundInteraction(.enabled(upThrough: .height(380)))
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(28)
+            }
+            .sheet(isPresented: $showingDemo) {
+                PassStudioDemoView(model: sampleModel) { showingDemo = false }
+                    .presentationDetents([.large])
+                    .presentationCornerRadius(28)
+            }
+            .onAppear {
+                if !hasSeenStudioDemo {
+                    hasSeenStudioDemo = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        showingDemo = true
+                    }
+                }
             }
         }
         .preferredColorScheme(.dark)

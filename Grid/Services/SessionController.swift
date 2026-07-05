@@ -25,6 +25,11 @@ final class SessionController {
     private var awaySince: Date?
     private var flagCountThisSession = 0
 
+    /// Race Control (the yellow/red flag drama) and the Live Activity are Pro
+    /// features — free sessions still run and still count breakaways for stats,
+    /// they just don't get the live pit-wall theatre.
+    private var isPro: Bool { StoreService.shared.hasFullAccess }
+
     var driverName: String {
         let stored = UserDefaults.standard.string(forKey: "driverName") ?? ""
         return stored.isEmpty ? "DRIVER" : stored
@@ -86,7 +91,7 @@ final class SessionController {
         await blocking.requestAuthorizationIfNeeded()
         await NotificationService.requestAuthorization()
         blocking.activateShield(until: startDate.addingTimeInterval(pass.durationSeconds))
-        liveActivity.start(pass: pass, startDate: startDate)
+        if isPro { liveActivity.start(pass: pass, startDate: startDate) }
         beginRacing(pass: pass, startDate: startDate)
     }
 
@@ -138,6 +143,8 @@ final class SessionController {
             guard pitUntil == nil else { return } // pit stop = licensed to leave
             awaySince = .now
             flagCountThisSession += 1
+            // Race Control theatre (flags on the Live Activity) is Pro-only.
+            guard isPro else { return }
             let yellowDeadline = Date.now.addingTimeInterval(AppConfig.flagGraceSeconds)
             let redDeadline = yellowDeadline.addingTimeInterval(AppConfig.redFlagGraceSeconds)
 

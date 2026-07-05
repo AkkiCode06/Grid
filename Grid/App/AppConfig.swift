@@ -1,8 +1,18 @@
 import Foundation
 
 enum AppConfig {
-    /// Product ID for the one-time full unlock. Configurable before launch.
+    /// Grid Pro subscription product IDs (see Grid.storekit for local testing).
+    static let proYearlyProductID = "com.akki.grid.pro.yearly"
+    static let proMonthlyProductID = "com.akki.grid.pro.monthly"
+    static var proProductIDs: [String] { [proYearlyProductID, proMonthlyProductID] }
+
+    /// Legacy one-time unlock ID, still honoured if a user owns it.
     static let fullUnlockProductID = "com.akki.grid.unlock.full"
+
+    /// Every product ID that grants full access.
+    static var unlockingProductIDs: Set<String> {
+        Set(proProductIDs + [fullUnlockProductID])
+    }
 
     /// Grace period after leaving the app before the yellow flag drops.
     static let flagGraceSeconds: TimeInterval = 20

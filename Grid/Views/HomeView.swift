@@ -111,7 +111,7 @@ struct HomeView: View {
         .fullScreenCover(item: $paywallLock) { lock in
             OnboardingPaywallView(
                 onSubscribe: {
-                    StoreService.shared.grantPlaceholderUnlock()
+                    // Access is already granted by StoreKit at this point.
                     paywallLock = nil
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                         showProPassReveal = true
@@ -125,7 +125,6 @@ struct HomeView: View {
         .fullScreenCover(isPresented: $showingOnboardingPaywall) {
             OnboardingPaywallView(
                 onSubscribe: {
-                    StoreService.shared.grantPlaceholderUnlock()
                     showingOnboardingPaywall = false
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                         showProPassReveal = true
